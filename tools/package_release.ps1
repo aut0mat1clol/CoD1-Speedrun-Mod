@@ -4,7 +4,7 @@
 # Берёт из игры готовые файлы (main\z_sr_speedrun_loctext.pk3 с уже вставленным
 # хуком + configs\autoexec.cfg проекта (флаг ставится 14) + пропатченную
 # пропатченная gamex86.dll из корня игры) и собирает ОДИН zip в .\release\ :
-#   cod1_speedrun_1_0_2_full.zip - мод + спидометр + учёт паузы (RTA):
+#   cod1_speedrun_1_0_3_full.zip - мод + спидометр + учёт паузы (RTA):
 #     main\       -> кинуть в main игры (pk3 + autoexec.cfg)
 #     game_root\  -> gamex86.dll кинуть в корень игры (с заменой, свой бэкап!)
 # Предусловие: install.ps1 -Patch уже отработал из СВЕЖЕЙ копии проекта
@@ -14,7 +14,7 @@
 
 $ErrorActionPreference = "Stop"
 $modRoot = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Definition)
-$wantVer = "1.0.2"   # свежесть pk3 проверяется по этой строке в _main.gsc
+$wantVer = "1.0.3"   # свежесть pk3 проверяется по этой строке в _main.gsc
 $wantDll = "AB3FF2DFBF7892E6DBEBC4A23E1615B4"
 
 Write-Host "=== package_release: полный архив (мод + спидометр + паузы RTA, $wantVer) ===" -ForegroundColor Cyan
@@ -92,7 +92,7 @@ $installTxt = @"
 3. Запусти игру, загрузи любую карту. Мод МОЛЧИТ по умолчанию (sr_debug 0):
    видны только важные строки Reset / Map Time / Run End. Для проверки
    набери в консоли (~):  set sr_debug 1  - и при новой загрузке карты жди:
-     "Speedrun mod loaded (1.0.2)"
+     "Speedrun mod loaded (1.0.3)"
      "pause clock ON"
    Спидометр - в центре экрана, общее время справа вверху под Level Time.
    Формат тотала H:MM:SS.mmm с нулями; цвет спидометра по скорости:
@@ -131,7 +131,7 @@ autoexec.cfg из main игры.
 
 $release = Join-Path $modRoot "release"
 if(-not (Test-Path $release)) { New-Item -ItemType Directory -Path $release | Out-Null }
-$zip = Join-Path $release "cod1_speedrun_1_0_2_full.zip"
+$zip = Join-Path $release "cod1_speedrun_1_0_3_full.zip"
 if(Test-Path $zip) { Remove-Item $zip -Force }
 Compress-Archive -Path (Join-Path $stage "full\*") -DestinationPath $zip
 Remove-Item $stage -Recurse -Force
