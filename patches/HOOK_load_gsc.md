@@ -1,70 +1,73 @@
-# Инжект хука в maps\_load.gsc — подробно
+# How the mod hooks into the game — technical breakdown (for moderators)
 
-## Что вообще такое «инжект» и зачем
+## The hook: `maps/_load.gsc`
 
-Скрипты коД1 лежат в картотеке `maps/` внутри pk3-архивов (pk3 = обычный zip).
-Каждая из 21 миссии в начале своего скрипта вызывает `maps\_load::main()`.
-Если мы добавим В НАЧАЛО функции `main()` в `maps\_load.gsc` одну строку
-вызова нашего мода — мод будет автоматически стартовать на КАЖДОЙ карте
-кампании. Это и есть хук.
+Every one of the 21 campaign missions calls `maps\_load::main()` at the top
+of its map script. The mod injects exactly **one line** at the very start of
+that function:
 
-Оригинальные архивы игры мы НЕ трогаем: свою версию `_load.gsc` кладём
-в модовый pk3 `z_sr_speedrun_loctext.pk3`. Движок ищет файлы в pk3 в обратном
-алфавитном порядке, поэтому файл из `z_...pk3` перекрывает файл из `pak0.pk3`.
-
-## Способ А — автоматический (рекомендую)
-
-Скрипт `install.ps1` делает всё сам:
-
-1. Открой PowerShell в папке мода: в Проводнике **Shift + ПКМ** по пустому
-   месту папки `cod1-speedrun` → «Открыть окно PowerShell здесь».
-2. Выполни:
-   ```
-   powershell -ExecutionPolicy Bypass -File install.ps1
-   ```
-3. Скрипт спросит путь к игре — укажи папку, где лежит `CoDSP.exe`
-   (например `D:\Games\Call of Duty`).
-4. Готово: скрипт сам достанет `_load.gsc` из `pak0.pk3`, вставит строку,
-   соберёт `z_sr_speedrun_loctext.pk3` и **поместит его в `main\` автоматически**.
-
-Дальше — только ярлык (README, раздел «Установка»).
-
-## Способ Б — руками (если хочешь понять/авто не сработало)
-
-1. **Извлеки оригинал.** Файл `_load.gsc` обычно лежит в `CoD1\main\pak0.pk3`,
-   но в некоторых сборках — в другом `pak*.pk3` или распакован в `main\maps\`.
-   Открывай pk3 архиватором (7-Zip: ПКМ → 7-Zip → Открыть) и ищи `maps\_load.gsc`
-   среди ВСЕХ pk3 папки main; бери копию из «позднего» по алфавиту архива —
-   игра грузит именно её. Перетащи файл куда-нибудь на стол.
-2. **Пропатчи.** Открой его Блокнотом/Notepad++. Найди в самом начале:
-   ```gsc
-   main()
-   {
-   ```
-   и сразу после открывающей скобки вставь строку:
-   ```gsc
-   	thread maps\speedrun\_main::init();
-   ```
-   (отступ — табуляция, но пробелы тоже сойдут)
-3. **Положи в проект.** Сохрани файл как `cod1-speedrun\src_loctext\maps\_load.gsc`.
-4. **Собери pk3.** Содержимое папки `cod1-speedrun\src_loctext\` (папки `maps` и
-   `ui`) запакуй в zip и переименуй архив в `z_sr_speedrun_loctext.pk3`.
-   Важно: запаковать СОДЕРЖИМОЕ src_loctext, а не саму папку.
-5. **Установи.** Скопируй `z_sr_speedrun_loctext.pk3` в `CoD1\main\`.
-
-## Проверка, что хук сработал
-
-Запуск: `CoDSP.exe +set developer 1 +devmap dawnville`. После загрузки
-открой консоль (~) — должна быть строка:
+```gsc
+main()
+{
+	thread maps\speedrun\_main::init(); // [SR] speedrun mod hook
+    ...
 ```
-[SR] Speedrun mod loaded (1.3). IGT: 1 SPD: 1
+
+From there the mod starts itself on every map (one thread, self-healing
+watchdog).
+
+**Stock archives are never modified.** The patched `_load.gsc` ships inside
+`z_sr_speedrun_loctext.pk3`. The engine resolves files across pk3 archives in
+reverse-alphabetical order, so a file in `z_...pk3` overrides the same path
+in `pak0.pk3` & co. Uninstalling = deleting the pk3.
+
+## Complete list of stock-script diffs (nothing else is touched)
+
+| File | Diff | Purpose |
+|---|---|---|
+| `maps/_load.gsc` | **+1 line** | the init hook shown above; the rest of the file is byte-identical to stock |
+| `maps/_tankdrive.gsc` | **+1 line** | `tankhud2.sort = 1000;` in `tank_hud()` — **cosmetic only**: with the mod's extra HUD elements present, the engine's equal-sort draw order rendered the healthbar fill on top of its frame; the frame is now pinned above the fill. Zero gameplay effect |
+| `maps/berlin.gsc` | final-split anchor | `setcvar("rt_end_frozen", "1")` placed **after** `cinematic("cod_end.roq");` + `wait (0.6);`, i.e. the run timer freezes on the first frame of the end video. `cinematic()` does not block the script; the 0.6 s is hardcoded — the split point is identical for every runner |
+
+## The `gamex86.dll` patch
+
+- md5 `AB3FF2DFBF7892E6DBEBC4A23E1615B4`, produced by patching the user's own
+  stock dll (the original is not distributed anywhere).
+- Two minimal **additive** overloads:
+  1. `getfractionstartammo()` on the player → exact planar speed
+     `sqrt(vx^2 + vy^2)` for the speedometer.
+  2. `getfractionmaxammo()` called **with no arguments** →
+     `float(GetTickCount())`, a wall clock used to count pause-menu time.
+- Stock behavior under normal usage is unchanged — verified: **none of the
+  144 stock `.gsc` scripts call either function**.
+
+## What the timer actually is (verification-relevant)
+
+- **Pure GSC**: server-frame accumulation (50 ms tick); the run total
+  persists through F9 quickloads via archived cvars
+  (`rt_cont_real` / `rt_cont_wall`, CVAR_ARCHIVE).
+- Excluded automatically: loads (same-map rollback detector), pre-mission
+  briefing screens (level-clock gate). ESC pause **counts** (RTA) via the
+  wall clock. New Game auto-resets.
+- The HUD is script hudelems only (single-digit columns; no custom shaders,
+  menus or cgame changes).
+- Console output (always on): `NEW GAME: run timer reset`,
+  `[SR] MAP TIME … | RUN TOTAL …`, `RUN END! FINAL TIME … - gg!`.
+
+## How to verify in-game
+
+`CoDSP.exe`, then `set sr_debug 1` and load any map —
+expected lines:
+
 ```
-Нет строки → смотри консоль на предмет `script compile error` — обычно это
-опечатка в пути или включён tab вместо пробелов где не надо.
+Speedrun mod loaded (1.0.2)
+pause clock ON (wall clock ok)
+```
 
-## Конфликты с другими SP-модами
+and a clean console (no `script compile error`, no `runtime error`).
 
-Если стоит мод, тоже перекрывающий `_load.gsc`, побеждает тот pk3, что
-«дальше по алфавиту». Решение: строку хука вставляешь не в оригинал из
-pak0.pk3, а в ТОТ `_load.gsc`, который реально грузится (из pk3 модов с
-именем после z_sr...). Иначе наш мод просто не стартует.
+## Conflicts with other SP mods
+
+If another mod overrides `_load.gsc` too, the alphabetically later pk3 wins.
+To merge, inject the same one-line hook into the `_load.gsc` copy that
+actually loads (i.e. from the later pk3).
