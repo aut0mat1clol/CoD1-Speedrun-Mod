@@ -13,7 +13,7 @@ time counts** (RTA).
    - contents of `main\` → into `main\` (the mod pk3 + `autoexec.cfg`)
    - `game_root\gamex86.dll` → into the game root, replacing the original.
      **Back up your original `gamex86.dll` first** (any copy of it is fine).
-3. Launch the game: `CoDSP.exe +set developer 1`.
+3. Launch the game.
 4. The mod is quiet by default (`sr_debug 0`): only Reset / Map Time / Run End
    print. Sanity check: `set sr_debug 1` in the console → after a map loads
    you should see `Speedrun mod loaded ("version")` + `pause clock ON`.
