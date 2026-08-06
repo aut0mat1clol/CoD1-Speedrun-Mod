@@ -1,4 +1,4 @@
-# CoD1 Speedrun — All-in-One mod (1.0.2)
+# CoD1 Speedrun — All-in-One mod
 
 Speedrun toolkit for **Call of Duty (2003), single-player campaign, patch 1.3**
 (Windows, iw3xo-style): HUD speedometer, run timer (`H:MM:SS.mmm`) that
@@ -7,7 +7,7 @@ time counts** (RTA).
 
 ## Download & install (2 minutes)
 
-1. Download **`cod1_speedrun_1_0_2_full.zip`** from the
+1. Download **`cod1_speedrun_*_full.zip`** from the
    **[latest release](https://github.com/aut0mat1clol/CoD1-Speedrun-Mod/releases/latest)**.
 2. Unzip into your game folder (the one containing `CoDSP.exe`):
    - contents of `main\` → into `main\` (the mod pk3 + `autoexec.cfg`)
@@ -16,7 +16,7 @@ time counts** (RTA).
 3. Launch the game: `CoDSP.exe +set developer 1`.
 4. The mod is quiet by default (`sr_debug 0`): only Reset / Map Time / Run End
    print. Sanity check: `set sr_debug 1` in the console → after a map loads
-   you should see `Speedrun mod loaded (1.0.2)` + `pause clock ON`.
+   you should see `Speedrun mod loaded ("version")` + `pause clock ON`.
 
 **Uninstall**: delete the pk3 + `autoexec.cfg` from `main\`, restore your
 original `gamex86.dll`. No other game files are touched.
