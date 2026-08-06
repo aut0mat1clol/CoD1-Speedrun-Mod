@@ -4,7 +4,7 @@
 // Semantics:
 //   - run total survives F9 quickloads via the archived cvar channel
 //     (rt_cont_real/rt_cont_wall, CVAR_ARCHIVE); same-map catch-up:
-//     a >750ms gap restores the run total;
+//     a >100ms gap restores the run total;
 //   - PAUSE COUNTS (RTA): the dll patch makes getfractionmaxammo() with
 //     NO args a raw GetTickCount() wall clock; ESC freezes script frames,
 //     so one long gap == a pause and is added; quickloads are excluded by
@@ -189,7 +189,7 @@ sr_timer_loop()
         if(!froz && getcvar("mapname") != "" && getcvar("rt_last_map") == getcvar("mapname"))
         {
             gap = getcvarint("rt_cont_real") - cont_disp; // >0 => state rewound by a quickload
-            if(gap > 750)
+            if(gap > 100)
             {
                 level.sr_starttime = gettime() - (getcvarint("rt_cont_real") - getcvarint("rt_run_total"));
                 setcvar("rt_ms_cur", getcvarint("rt_cont_real") - getcvarint("rt_run_total"));
