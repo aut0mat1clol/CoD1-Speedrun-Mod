@@ -51,9 +51,11 @@ starting a New Game resets the run timer.
 **Settings (`sr_`):** `sr_speedo`, `sr_igt`, `sr_spd_dec`, `sr_debug`,
 `sr_firstmap`
 (New Game auto-reset map).
+
 **Data (`rt_`, do not touch):** `rt_spd`, `rt_spd_max`, `rt_run_total`,
 `rt_ms_cur`, `rt_igt_m/s/ds`, `rt_cont_real`, `rt_cont_wall`,
 `rt_last_map`, `rt_end_frozen`, `rt_dt`.
+
 **Internal (`rt_`):** `rt_dll_api` (set automatically), `rt_cmd_mreset`.
 
 ## For moderators: what's actually changed
