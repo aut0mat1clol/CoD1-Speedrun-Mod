@@ -26,7 +26,7 @@ original `gamex86.dll`. No other game files are touched.
 | Feature | How it works |
 |---|---|
 | Run timer (HUD, top-right, `H:MM:SS.mmm`) | scripted, survives F9 quickloads (archived-cvar channel `rt_cont_real`) |
-| Auto-splits | `MAP TIME | RUN TOTAL` printed on every map change |
+| Auto-splits | `MAP TIME & RUN TOTAL` printed on every map change |
 | F9 rollback protection | same-map trap: gap > 100 ms → total keeps running |
 | Final split on berlin | freezes on the first frame of the end video (`wait (0.6)` after `cinematic()`, hardcoded — identical for every runner) |
 | Credits map | timer stays pinned at the final time |
