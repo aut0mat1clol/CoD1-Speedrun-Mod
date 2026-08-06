@@ -1,4 +1,4 @@
-# CoD1 Speedrun — All-in-One mod (1.0)
+# CoD1 Speedrun — All-in-One mod (1.0.1)
 
 Speedrun toolkit for **Call of Duty (2003), single-player campaign, patch 1.3**
 (Windows, iw3xo-style): HUD speedometer, run timer (`H:MM:SS.mmm`) that
@@ -29,7 +29,7 @@ final split on berlin; **pause menu time counts** (RTA, dll wall-clock).
 2. Launch the game: `CoDSP.exe +set developer 1`.
 3. The mod is quiet by default (`sr_debug 0`): only Reset / Map Time /
    Run End print. Sanity check: console `set sr_debug 1` → after map load
-   you should see `Speedrun mod loaded (1.0)` + `pause clock ON`.
+   you should see `Speedrun mod loaded (1.0.1)` + `pause clock ON`.
 
 ## Features
 
@@ -40,7 +40,7 @@ final split on berlin; **pause menu time counts** (RTA, dll wall-clock).
 | F9 rollback protection | same-map trap: gap > 750 ms → total keeps running |
 | Final split | freeze when the `cod_end.roq` video starts (hook in `maps/berlin.gsc`), `RUN END! FINAL TIME` |
 | Credits map | timer stays pinned at the final time |
-| Speedometer (HUD, center) | exact native speed (patch); color-coded: white < 190, green 190+, yellow 250+, red 300+; decimals `sr_spd_dec` 0–3 |
+| Speedometer (HUD, center) | exact native speed (patch); color-coded: white < 180, green 180+, yellow 230+, red 275+; decimals `sr_spd_dec` 0–3 |
 
 ## Console controls (~ key)
 
@@ -69,7 +69,7 @@ final split on berlin; **pause menu time counts** (RTA, dll wall-clock).
 
 `powershell -ExecutionPolicy Bypass -File tools\package_release.ps1` builds
 one full "unzip and drop into the game folder" archive —
-`cod1_speedrun_1_0_full.zip`: the mod + exact speedometer (`gamex86.dll`
+`cod1_speedrun_1_0_1_full.zip`: the mod + exact speedometer (`gamex86.dll`
 goes to the game root, replacing the original — keep your backup).
 An INSTALL.txt for the recipient is included. Requires `install.ps1 -Patch`
 to have been run on your machine first.

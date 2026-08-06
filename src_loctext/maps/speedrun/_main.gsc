@@ -1,5 +1,5 @@
 // ============================================================================
-// Speedrun All-in-One (1.0) / CoD1 SP (patch 1.3) - LOCTEXT single build
+// Speedrun All-in-One (1.0.1) / CoD1 SP (patch 1.3) - LOCTEXT single build
 //
 // Semantics:
 //   - run total survives F9 quickloads via the archived cvar channel
@@ -14,7 +14,7 @@
 //     >=1s past the arm tick;
 //   - speedometer: native-only (dll patch, exact ps.velocity), HUD center;
 //     run total top-right under the stock Level Time, H:MM:SS.mmm, colors
-//     white/green/yellow/red by speed;
+//     white/green/yellow/red by speed (180/230/275);
 //   - sr_debug 0|1 (default quiet): only Reset / Map Time / Run End print;
 //   - NewGame autoreset (fresh-clock test + first-map briefing latch);
 //   - berlin final split is anchored to the end VIDEO start: freeze after
@@ -111,7 +111,7 @@ init()
     player thread sr_speedo_loop();
     player thread sr_hud_loop();
 
-    sr_dbg("Speedrun mod loaded (1.0).");
+    sr_dbg("Speedrun mod loaded (1.0.1).");
 }
 
 // ----------------------------------------------------------------------------
@@ -384,10 +384,9 @@ sr_speedo_loop()
 
 // ============================================================================
 // HUD - speedo center + run total top-right under the built-in Level Time.
-// Only 8 live elems (tankdrive hudelem budget): the total renders
+// Only 10 live elems (tankdrive hudelem budget): the total renders
 // zero-padded MM:SS.mmm as single-digit columns, the hours pair appears
-// lazily at >=1h, mmm is one unpadded elem (user asked padding for MM/SS
-// only). Punctuation via the missing-istring fallback. Watchdog.
+// lazily at >=1h. Punctuation via the missing-istring fallback. Watchdog.
 // ============================================================================
 sr_hud_loop()
 {
@@ -403,7 +402,7 @@ sr_hud_loop()
     hud_spd.fontscale = 1.4;
     hud_spd.color = (1, 1, 1);
 
-    // ---- formatted total, ZERO-PADDED digits, only 8 live elems ----
+    // ---- formatted total, ZERO-PADDED digits, 10 live elems ----
     // Right edge pinned at 612 under the built-in Level Time .
     hud_mm1 = newHudElem(); hud_mm1.x = 530; hud_mm1.alignX = "left";
     hud_mm2 = newHudElem(); hud_mm2.x = 540; hud_mm2.alignX = "left";
@@ -411,10 +410,13 @@ sr_hud_loop()
     hud_ss1 = newHudElem(); hud_ss1.x = 556; hud_ss1.alignX = "left";
     hud_ss2 = newHudElem(); hud_ss2.x = 566; hud_ss2.alignX = "left";
     hud_c2  = newHudElem(); hud_c2.x  = 577; hud_c2.alignX  = "left";
-    hud_mmm = newHudElem(); hud_mmm.x = 612; hud_mmm.alignX = "right";
+    hud_m1  = newHudElem(); hud_m1.x  = 582; hud_m1.alignX  = "left";
+    hud_m2  = newHudElem(); hud_m2.x  = 592; hud_m2.alignX  = "left";
+    hud_m3  = newHudElem(); hud_m3.x  = 602; hud_m3.alignX  = "left";
 
     tel[0] = hud_mm1; tel[1] = hud_mm2; tel[2] = hud_c1;
-    tel[3] = hud_ss1; tel[4] = hud_ss2; tel[5] = hud_c2; tel[6] = hud_mmm;
+    tel[3] = hud_ss1; tel[4] = hud_ss2; tel[5] = hud_c2;
+    tel[6] = hud_m1; tel[7] = hud_m2; tel[8] = hud_m3;
     for(ti = 0; ti < tel.size; ti++)
     {
         tel[ti].y = 62;
@@ -426,7 +428,7 @@ sr_hud_loop()
     hud_c1 setText(&":");
     hud_c2 setText(&".");
 
-    sr_dbg("HUD elems created: spd center, total MM:SS.mmm (8 live, lazy H)");
+    sr_dbg("HUD elems created: spd center, total MM:SS.mmm (10 live, lazy H)");
 
     for(;;)
     {
@@ -445,9 +447,9 @@ sr_hud_loop()
 
         spd = getcvarfloat("rt_spd");
         hud_spd setValue(spd); // fractional u/s
-        if(spd >= 300)      hud_spd.color = (1, 0.15, 0.15); // red
-        else if(spd >= 250) hud_spd.color = (1, 0.9, 0.1);   // yellow
-        else if(spd >= 190) hud_spd.color = (0.25, 1, 0.3);  // green
+        if(spd >= 275)      hud_spd.color = (1, 0.15, 0.15); // red
+        else if(spd >= 230) hud_spd.color = (1, 0.9, 0.1);   // yellow
+        else if(spd >= 180) hud_spd.color = (0.25, 1, 0.3);  // green
         else                hud_spd.color = (1, 1, 1);       // idle
 
         if(getcvarint("rt_end_frozen"))
@@ -486,7 +488,9 @@ sr_hud_loop()
         hud_mm2 setValue((total / 60000) % 10);
         hud_ss1 setValue(((total / 1000) % 60) / 10);
         hud_ss2 setValue((total / 1000) % 10);
-        hud_mmm setValue(total % 1000);
+        hud_m1 setValue((total % 1000) / 100);
+        hud_m2 setValue((total % 100) / 10);
+        hud_m3 setValue(total % 10);
 
         // .02 still amounts to one server frame (50ms) - script numbers
         // cannot refresh faster than the server tick in this binary.
