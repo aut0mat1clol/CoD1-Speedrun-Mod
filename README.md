@@ -1,4 +1,4 @@
-# CoD1 Speedrun — All-in-One mod (1.0.1)
+# CoD1 Speedrun — All-in-One mod (1.0.2)
 
 Speedrun toolkit for **Call of Duty (2003), single-player campaign, patch 1.3**
 (Windows, iw3xo-style): HUD speedometer, run timer (`H:MM:SS.mmm`) that
@@ -7,7 +7,7 @@ time counts** (RTA).
 
 ## Download & install (2 minutes)
 
-1. Download **`cod1_speedrun_1_0_1_full.zip`** from the
+1. Download **`cod1_speedrun_1_0_2_full.zip`** from the
    **[latest release](https://github.com/aut0mat1clol/CoD1-Speedrun-Mod/releases/latest)**.
 2. Unzip into your game folder (the one containing `CoDSP.exe`):
    - contents of `main\` → into `main\` (the mod pk3 + `autoexec.cfg`)
@@ -16,7 +16,7 @@ time counts** (RTA).
 3. Launch the game: `CoDSP.exe +set developer 1`.
 4. The mod is quiet by default (`sr_debug 0`): only Reset / Map Time / Run End
    print. Sanity check: `set sr_debug 1` in the console → after a map loads
-   you should see `Speedrun mod loaded (1.0.1)` + `pause clock ON`.
+   you should see `Speedrun mod loaded (1.0.2)` + `pause clock ON`.
 
 **Uninstall**: delete the pk3 + `autoexec.cfg` from `main\`, restore your
 original `gamex86.dll`. No other game files are touched.
@@ -25,9 +25,9 @@ original `gamex86.dll`. No other game files are touched.
 
 | Feature | How it works |
 |---|---|
-| Run timer (HUD, top-right, `H:MM:SS.mmm`) | scripted, survives quickloads (archived-cvar channel `rt_cont_real`) |
+| Run timer (HUD, top-right, `H:MM:SS.mmm`) | scripted, survives F9 quickloads (archived-cvar channel `rt_cont_real`) |
 | Auto-splits | `MAP TIME | RUN TOTAL` printed on every map change |
-| Quickload rollback protection | same-map trap: gap > 750 ms → total keeps running |
+| F9 rollback protection | same-map trap: gap > 750 ms → total keeps running |
 | Final split on berlin | freezes on the first frame of the end video (`wait (0.6)` after `cinematic()`, hardcoded — identical for every runner) |
 | Credits map | timer stays pinned at the final time |
 | Speedometer (HUD, center) | exact native speed; color-coded: white < 180, green 180+, yellow 230+, red 275+; decimals via `sr_spd_dec` 0–3 |
@@ -49,7 +49,7 @@ starting a New Game resets the run timer.
 ## Cvars
 
 **Settings (`sr_`):** `sr_speedo`, `sr_igt`, `sr_spd_dec`, `sr_debug`,
-`sr_maxwin` (max-speed auto-reset window, seconds), `sr_firstmap`
+`sr_firstmap`
 (New Game auto-reset map).
 **Data (`rt_`, do not touch):** `rt_spd`, `rt_spd_max`, `rt_run_total`,
 `rt_ms_cur`, `rt_igt_m/s/ds`, `rt_cont_real`, `rt_cont_wall`,

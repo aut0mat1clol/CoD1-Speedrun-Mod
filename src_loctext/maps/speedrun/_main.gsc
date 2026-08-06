@@ -1,5 +1,5 @@
 // ============================================================================
-// Speedrun All-in-One (1.0.1) / CoD1 SP (patch 1.3) - LOCTEXT single build
+// Speedrun All-in-One (1.0.2) / CoD1 SP (patch 1.3) - LOCTEXT single build
 //
 // Semantics:
 //   - run total survives F9 quickloads via the archived cvar channel
@@ -111,7 +111,7 @@ init()
     player thread sr_speedo_loop();
     player thread sr_hud_loop();
 
-    sr_dbg("Speedrun mod loaded (1.0.1).");
+    sr_dbg("Speedrun mod loaded (1.0.2).");
 }
 
 // ----------------------------------------------------------------------------
@@ -457,6 +457,12 @@ sr_hud_loop()
         else
             total = getcvarint("rt_run_total") + gettime() - level.sr_starttime;
 
+        // toggles hide their elems (alpha 0/1; the elems stay alive)
+        tvis = getcvarint("sr_igt");
+        for(ti = 0; ti < tel.size; ti++)
+            tel[ti].alpha = tvis;
+        hud_spd.alpha = getcvarint("sr_speedo");
+
         // lazy hours pair: exists only from 1h on (hudelem budget)
         if(total >= 3600000 && !isdefined(hud_th))
         {
@@ -472,8 +478,8 @@ sr_hud_loop()
         {
             if(total >= 3600000)
             {
-                hud_th.alpha = 1;
-                hud_c0.alpha = 1;
+                hud_th.alpha = tvis;
+                hud_c0.alpha = tvis;
                 hud_th setValue(total / 3600000);
             }
             else
