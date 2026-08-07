@@ -1,10 +1,10 @@
 // ============================================================================
-// Speedrun All-in-One (1.0.2) / CoD1 SP (patch 1.3) - LOCTEXT single build
+// Speedrun All-in-One (1.0.3) / CoD1 SP (patch 1.3) - LOCTEXT single build
 //
 // Semantics:
 //   - run total survives F9 quickloads via the archived cvar channel
 //     (rt_cont_real/rt_cont_wall, CVAR_ARCHIVE); same-map catch-up:
-//     a >100ms gap restores the run total;
+//     a >10ms gap restores the run total;
 //   - PAUSE COUNTS (RTA): the dll patch makes getfractionmaxammo() with
 //     NO args a raw GetTickCount() wall clock; ESC freezes script frames,
 //     so one long gap == a pause and is added; quickloads are excluded by
@@ -14,7 +14,9 @@
 //     >=1s past the arm tick;
 //   - speedometer: native-only (dll patch, exact ps.velocity), HUD center;
 //     run total top-right under the stock Level Time, H:MM:SS.mmm, colors
-//     white/green/yellow/red by speed (180/230/275);
+//     white/green/yellow/red by speed (180/230/275) + rolling 5s
+
+//     average below it (sr_spd_avg);
 //   - sr_debug 0|1 (default quiet): only Reset / Map Time / Run End print;
 //   - NewGame autoreset (fresh-clock test + first-map briefing latch);
 //   - berlin final split is anchored to the end VIDEO start: freeze after
@@ -30,7 +32,7 @@ init()
     // USER SETTINGS (sr_ prefix - these are meant to be tweaked):
     sr_cvar_default("sr_speedo",     "1"); // speedometer on/off (console)
     sr_cvar_default("sr_igt",        "1"); // IGT timer on/off (console)
-    sr_cvar_default("sr_maxwin",     "30"); // rt_spd_max auto-reset, sec (0=off)
+    sr_cvar_default("sr_spd_avg",    "1"); // rolling 5s average on/off (console)
     sr_cvar_default("sr_spd_dec",    "1"); // speedometer decimals (0..3)
     sr_cvar_default("sr_firstmap",   "training"); // New Game autoreset map
     sr_cvar_default("sr_debug",      "0"); // 1 = full diagnostic [SR] prints
@@ -111,7 +113,7 @@ init()
     player thread sr_speedo_loop();
     player thread sr_hud_loop();
 
-    sr_dbg("Speedrun mod loaded (1.0.2).");
+    sr_dbg("Speedrun mod loaded (1.0.3).");
 }
 
 // ----------------------------------------------------------------------------
@@ -189,7 +191,7 @@ sr_timer_loop()
         if(!froz && getcvar("mapname") != "" && getcvar("rt_last_map") == getcvar("mapname"))
         {
             gap = getcvarint("rt_cont_real") - cont_disp; // >0 => state rewound by a quickload
-            if(gap > 100)
+            if(gap > 10)
             {
                 level.sr_starttime = gettime() - (getcvarint("rt_cont_real") - getcvarint("rt_run_total"));
                 setcvar("rt_ms_cur", getcvarint("rt_cont_real") - getcvarint("rt_run_total"));
@@ -327,27 +329,19 @@ sr_speedo_loop()
 
     need_note = 1; // "patch required" hint, printed once
 
+    // rolling 5s average: 100-sample ring @50ms ticks (thread-locals, so a
+    // watchdog respawn simply restarts the window - harmless)
+    ring = [];
+    ring_i = 0;
+    sum = 0;
+    cnt = 0;
+    level.sr_avg = 0;
+
     for(;;)
     {
         wait .05; // 20Hz server tick - the max cadence any script number gets
 
         level.sr_beat2 = gettime(); // watchdog heartbeat
-
-        // rt_spd_max auto-reset window (seconds; 0 = disabled)
-        win = getcvarint("sr_maxwin");
-        if(win > 0)
-        {
-            if(!isdefined(level.sr_maxwin_at))
-                level.sr_maxwin_at = gettime();
-            if(gettime() - level.sr_maxwin_at >= win * 1000)
-            {
-                setcvar("rt_spd_max", "0");
-                level.sr_maxwin_at = gettime();
-            }
-        }
-
-        if(!getcvarint("sr_speedo"))
-            continue;
 
         // native exact speed (needs the dll patch; rt_dll_api is patcher-set):
         if(!getcvarint("rt_dll_api"))
@@ -358,12 +352,33 @@ sr_speedo_loop()
                 sr_dbg("speedo is patch-only: run install.ps1 -Patch");
             }
             setcvar("rt_spd", "0");
+            level.sr_avg = 0;
             continue;
         }
 
         nv = self getfractionstartammo();
         if(nv > getcvarfloat("rt_spd_max"))
             setcvar("rt_spd_max", nv); // max keeps the RAW native peak
+
+        // rolling 5s average: sampled ALWAYS, even when the speedo elem is
+        // hidden, so sr_spd_avg shows a fresh number the moment it is on.
+        if(isdefined(ring[ring_i]))
+            sum = sum - ring[ring_i];
+        ring[ring_i] = nv;
+        sum += nv;
+        if(sum < 0)
+            sum = 0; // float drift guard
+        ring_i = (ring_i + 1) % 100;
+        if(cnt < 100)
+            cnt++;
+        // round to 0.1 via the cvar string channel (no int() builtin; cvar
+        // int parse truncates == floor, +0.5 = round half up). Values here
+        // are <= ~10k, far below the %g-safe 1e6 bound.
+        setcvar("rt_dt", (sum / cnt) * 10 + 0.5);
+        level.sr_avg = getcvarint("rt_dt") / 10.0;
+
+        if(!getcvarint("sr_speedo"))
+            continue;
 
         // display rounding: sr_spd_dec digits after the point (0..3).
         // CoD1 GSC has NO int/floor builtins -> round via the cvar string
@@ -384,7 +399,7 @@ sr_speedo_loop()
 
 // ============================================================================
 // HUD - speedo center + run total top-right under the built-in Level Time.
-// Only 10 live elems (tankdrive hudelem budget): the total renders
+// Only 11 live elems (tankdrive hudelem budget): the total renders
 // zero-padded MM:SS.mmm as single-digit columns, the hours pair appears
 // lazily at >=1h. Punctuation via the missing-istring fallback. Watchdog.
 // ============================================================================
@@ -402,7 +417,19 @@ sr_hud_loop()
     hud_spd.fontscale = 1.4;
     hud_spd.color = (1, 1, 1);
 
-    // ---- formatted total, ZERO-PADDED digits, 10 live elems ----
+    // rolling 5s average under the speedo (dimmer, smaller)
+    hud_avg = newHudElem();
+    hud_avg.x = 320;
+    hud_avg.y = 322;
+    hud_avg.alignX = "center";
+    hud_avg.alignY = "top";
+    hud_avg.sort = 10;
+    hud_avg.fontscale = 1.1;
+    hud_avg.color = (0.85, 0.85, 0.85);
+    if(!isdefined(level.sr_avg))
+        level.sr_avg = 0;
+
+    // ---- formatted total, ZERO-PADDED digits (spd + avg + 9) ----
     // Right edge pinned at 612 under the built-in Level Time .
     hud_mm1 = newHudElem(); hud_mm1.x = 530; hud_mm1.alignX = "left";
     hud_mm2 = newHudElem(); hud_mm2.x = 540; hud_mm2.alignX = "left";
@@ -428,7 +455,7 @@ sr_hud_loop()
     hud_c1 setText(&":");
     hud_c2 setText(&".");
 
-    sr_dbg("HUD elems created: spd center, total MM:SS.mmm (10 live, lazy H)");
+    sr_dbg("HUD elems created: spd + 5s avg center, total MM:SS.mmm (11 live, lazy H)");
 
     for(;;)
     {
@@ -447,6 +474,7 @@ sr_hud_loop()
 
         spd = getcvarfloat("rt_spd");
         hud_spd setValue(spd); // fractional u/s
+        hud_avg setValue(level.sr_avg); // rolling 5s average
         if(spd >= 275)      hud_spd.color = (1, 0.15, 0.15); // red
         else if(spd >= 230) hud_spd.color = (1, 0.9, 0.1);   // yellow
         else if(spd >= 180) hud_spd.color = (0.25, 1, 0.3);  // green
@@ -462,6 +490,7 @@ sr_hud_loop()
         for(ti = 0; ti < tel.size; ti++)
             tel[ti].alpha = tvis;
         hud_spd.alpha = getcvarint("sr_speedo");
+        hud_avg.alpha = getcvarint("sr_spd_avg");
 
         // lazy hours pair: exists only from 1h on (hudelem budget)
         if(total >= 3600000 && !isdefined(hud_th))
