@@ -2,7 +2,7 @@
 
 ## The hook: `maps/_load.gsc`
 
-Every one of the 21 campaign missions calls `maps\_load::main()` at the top
+Every one of the 26 campaign missions calls `maps\_load::main()` at the top
 of its map script. The mod injects exactly **one line** at the very start of
 that function:
 
