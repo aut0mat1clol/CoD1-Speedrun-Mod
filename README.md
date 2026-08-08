@@ -62,19 +62,6 @@ this mod gives 1 ms-true, self-consistent practice/split times.
   at ~1 ms resolution (the HUD itself still repaints once per server frame,
   ~50 ms). Without the dll the timer falls back to the old frame-grid math.
 
-## Settings menu persistence (one-time setup)
-
-The engine only writes cvars created with the ARCHIVE flag to `config.cfg`.
-To make menu changes stick between launches, run this **once** in the
-console (`~`):
-
-```
-seta sr_speedo 1; seta sr_spd_avg 1; seta sr_igt 1; seta sr_spd_dec 1; seta sr_debug 0
-```
-
-These are just the starting defaults; any later change in the menu is saved
-automatically. Repeat only if you wipe your `config.cfg`.
-
 ## Cvars
 
 **Settings (`sr_`):** `sr_speedo`, `sr_spd_avg`, `sr_igt`, `sr_spd_dec`,
