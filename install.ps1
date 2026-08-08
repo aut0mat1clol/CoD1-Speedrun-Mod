@@ -17,7 +17,7 @@ param([string]$GamePath = "", [switch]$Patch, [switch]$Revert, [switch]$Force)
 $ErrorActionPreference = "Stop"
 $modRoot = Split-Path -Parent $MyInvocation.MyCommand.Definition
 
-Write-Host "=== CoD1 Speedrun mod installer (1.3, 1.0.3) ===" -ForegroundColor Cyan
+Write-Host "=== CoD1 Speedrun mod installer (1.3, 1.1) ===" -ForegroundColor Cyan
 
 # --- путь к игре ---
 while($true) {
@@ -307,7 +307,7 @@ New-Pk3 $pk3 @("src_loctext")
 Write-Host "Собран z_sr_speedrun_loctext.pk3 (включает _load.gsc с хуком)"
 
 # --- 4. main: сносим ВСЕ старые варианты и кладём один ---
-foreach($old in @("z_sr_speedrun.pk3","z_sr_speedrun_hudelem.pk3","z_sr_speedrun_colon.pk3","z_sr_speedrun_loctext.pk3")) {
+foreach($old in @("z_sr_speedrun.pk3","z_sr_speedrun_hudelem.pk3","z_sr_speedrun_colon.pk3","z_sr_speedrun_menu.pk3","z_sr_speedrun_wall.pk3","z_sr_speedrun_loctext.pk3")) {
     $p = Join-Path $mainDir $old
     if(Test-Path $p) { Remove-Item $p -Force }
 }
@@ -341,7 +341,7 @@ Write-Host "=== Готово! ===" -ForegroundColor Cyan
 Write-Host '1) Ярлык запуска:  CoDSP.exe +set developer 1'
 Write-Host '2) Новая игра или devmap dawnville. По умолчанию мод ТИХИЙ (sr_debug 0):'
 Write-Host '   видны только Reset / Map Time / Run End. Диагностика: set sr_debug 1'
-Write-Host '   -> тогда жди "Speedrun mod loaded (1.0.3)" + "pause clock ON"'
+Write-Host '   -> тогда жди "Speedrun mod loaded (1.1)" + "pause clock ON"'
 Write-Host '3) Ручной сброс рана из консоли:'
 Write-Host '   set rt_run_total 0; set rt_spd_max 0; set rt_end_frozen 0; set rt_cont_real 0; set rt_cmd_mreset 1'
 Write-Host '4) Тоглы: set sr_speedo 0/1, set sr_igt 0/1; знаки после точки: set sr_spd_dec 0..3; шум: set sr_debug 0/1'

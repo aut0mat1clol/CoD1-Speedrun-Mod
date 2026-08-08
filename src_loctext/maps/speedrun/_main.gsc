@@ -51,6 +51,8 @@ init()
     sr_cvar_default("rt_cont_real",  "0");
     sr_cvar_default("rt_cont_wall",  "0");
     sr_cvar_default("rt_cmd_mreset",  "0"); // console latch: map-timer reset
+    sr_cvar_default("rt_wtotal",      "0"); // banked WALL ms (pause-inclusive) across maps
+    sr_cvar_default("rt_wcur_int",    "0"); // current-map WALL ms (int channel for cross-map persist)
     // rt_dll_api is set ONLY by the patcher (fail-closed):
     // >=1 = exact speedo present, >=14 = pause wall clock present.
     sr_cvar_default("rt_dll_api",     "0"); // set by install.ps1 -Patch
@@ -73,20 +75,47 @@ init()
         setcvar("rt_end_frozen", 0);
         setcvar("rt_cont_real", 0);
         setcvar("rt_cont_wall", 0);
+        setcvar("rt_wtotal", 0);
+        setcvar("rt_wcur_int", 0);
         sr_text("NEW GAME: run timer reset");
     }
 
     prev = getcvarint("rt_ms_cur");
+    sr_dbg("MAP ARRIVE: '" + getcvar("mapname") + "' prev-map '" + getcvar("rt_last_map")
+        + "' prev " + prev + "ms wcur " + getcvarint("rt_wcur_int") + "ms brief="
+        + sr_is_briefmap(getcvar("rt_last_map")));
 
-    if(prev > 0)
+    if(prev > 0 && sr_is_briefmap(getcvar("rt_last_map")))
+    {
+        // leaving a briefing level: its time is NOT banked into the run total
+        sr_dbg("BRIEFMAP SKIP: '" + getcvar("rt_last_map") + "' excluded " + prev + "ms");
+        setcvar("rt_wcur_int", 0);
+    }
+    else if(prev > 0)
     {
         total = getcvarint("rt_run_total") + prev;
         setcvar("rt_run_total", total);
+        wprev = getcvarint("rt_wcur_int"); // wall ms of the map that just ended
+        if(wprev > 0)
+            setcvar("rt_wtotal", getcvarint("rt_wtotal") + wprev);
+
+        // chat splits: wall-true (~1 ms) when the dll is patched; the
+        // old frame-grid numbers stay as fallback for pure-script installs
+        if(getcvarint("rt_dll_api") >= 14 && wprev > 0)
+        {
+            pprev = wprev;
+            ptotal = getcvarint("rt_wtotal"); // wall bank, already added above
+        }
+        else
+        {
+            pprev = prev;
+            ptotal = total;
+        }
 
         // padded like the HUD: MM:SS.mmm | H:MM:SS.mmm
-        pmm = prev / 60000; pss = (prev / 1000) % 60; pms = prev % 1000;
-        thh = total / 3600000; tmm = (total / 60000) % 60;
-        tss = (total / 1000) % 60; tms = total % 1000;
+        pmm = pprev / 60000; pss = (pprev / 1000) % 60; pms = pprev % 1000;
+        thh = ptotal / 3600000; tmm = (ptotal / 60000) % 60;
+        tss = (ptotal / 1000) % 60; tms = ptotal % 1000;
         sr_text("MAP TIME " + sr_pad2(pmm) + ":" + sr_pad2(pss) + "." + sr_pad3(pms)
             + " | RUN TOTAL " + thh + ":" + sr_pad2(tmm) + ":" + sr_pad2(tss) + "." + sr_pad3(tms));
     }
@@ -101,7 +130,14 @@ init()
         setcvar("rt_end_frozen", "0"); // a fresh map (or same-map retry) re-arms the end trigger
     level.sr_starttime = gettime();
     setcvar("rt_ms_cur", 0);
+    setcvar("rt_wcur_int", 0);
     level.sr_walllast = undefined; // re-arm the pause clock: skip first post-init tick
+    level.sr_wstart = undefined;   // wall anchor: armed once the level clock starts
+    level.sr_wcur = undefined;
+
+    // map-name tracker: runs on EVERY map incl. cutscene-only intros (no player
+    // ent -> timer loop never starts there); keeps prev-map truthful at arrivals
+    thread sr_mapname_watcher();
 
     // ---------- wait for the player entity ----------
     player = sr_wait_player();
@@ -113,7 +149,7 @@ init()
     player thread sr_speedo_loop();
     player thread sr_hud_loop();
 
-    sr_dbg("Speedrun mod loaded (1.0.3).");
+    sr_dbg("Speedrun mod loaded (1.1).");
 }
 
 // ----------------------------------------------------------------------------
@@ -150,6 +186,27 @@ sr_dbg(msg)
 }
 
 // console-friendly zero-padding for the important always-on prints
+sr_mapname_watcher()
+{
+    for(;;)
+    {
+        // mapname is EMPTY during _load init on some transition flows; keep the
+        // tracker live so the next map's arrival always sees the real prev map
+        mn = getcvar("mapname");
+        if(mn != "" && mn != getcvar("rt_last_map"))
+            setcvar("rt_last_map", mn);
+        wait 1;
+    }
+}
+
+sr_is_briefmap(name)
+{
+    // interlude/briefing maps: their time is excluded from the run total
+    return name == "allied_start" || name == "ru_stalingrad"
+        || name == "uk_6ab" || name == "uk_sas"
+        || name == "us_intro" || name == "us_mid";
+}
+
 sr_pad2(x)
 {
     if(x < 10)
@@ -197,6 +254,10 @@ sr_timer_loop()
                 setcvar("rt_ms_cur", getcvarint("rt_cont_real") - getcvarint("rt_run_total"));
                 cont_disp = getcvarint("rt_cont_real");
                 wasload = 1;
+                // wall anchor re-sync: THIS-MAP elapsed at save (rt_wtotal adds
+                // the banked part in the HUD by itself - re-anchoring to the FULL
+                // total would count the bank twice, inflating the HUD after loads!)
+                level.sr_wrel = cont_disp - getcvarint("rt_run_total");
                 sr_dbg("LOAD: total continued from " + (cont_disp / 1000) + "s");
             }
         }
@@ -220,6 +281,9 @@ sr_timer_loop()
             setcvar("rt_end_frozen", 0);
             setcvar("rt_cont_real", 0);
             setcvar("rt_cont_wall", 0);
+            setcvar("rt_wtotal", 0);
+            setcvar("rt_wcur_int", 0);
+            level.sr_wstart = undefined; // re-anchored at this tick's wall read
             level.sr_starttime = gettime();
             sr_text("NEW GAME: run timer reset (start latch)");
         }
@@ -253,6 +317,29 @@ sr_timer_loop()
                 }
                 d = w - level.sr_walllast;
                 level.sr_walllast = w;
+                // ---- WALL RUN CLOCK (RTA, ~1ms): anchored per-map wall elapsed ----
+                // ASL/LiveSplit parity: ESC pauses AND in-map/post-level menu & stats
+                // screens COUNT (LiveSplit removes loads only); only true load gaps
+                // (covered by the rollback path below) and the pre-mission briefing
+                // cradle are excluded. Briefmaps are excluded at the bank level.
+                if(isdefined(level.sr_wrel))
+                {
+                    level.sr_wstart = w - level.sr_wrel; // quickload rollback: restore pre-save elapsed
+                    level.sr_wrel = undefined;
+                }
+                if(!isdefined(level.sr_wstart) && gettime() - level.sr_starttime > 0)
+                {
+                    // arm only AFTER the level clock actually started: the pre-mission
+                    // BRIEFING screen runs on wall time but with the level clock frozen,
+                    // and it must NOT count. Back-align the anchor to the clock start.
+                    level.sr_wstart = w - (gettime() - level.sr_starttime);
+                    sr_dbg("wall RTA CLOCK armed (ASL: menus/stats count, loads+briefings excluded)");
+                }
+                if(isdefined(level.sr_wstart))
+                {
+                    level.sr_wcur = w - level.sr_wstart;
+                    setcvar("rt_wcur_int", sr_floor_big(level.sr_wcur)); // <=1ms quant, %g-safe
+                }
                 if(!wasload && d > 750 && d < 3600000)
                 {
                     di = sr_floor_big(d); // float ms -> INTEGER ms!
@@ -281,6 +368,7 @@ sr_timer_loop()
         {
             setcvar("rt_cmd_mreset", "0");
             level.sr_starttime = gettime(); // manual map-timer reset (console)
+            level.sr_wstart = undefined;   // wall channel follows too
         }
 
         // final split: a stock-script hook (berlin end cinematic) sets
@@ -290,7 +378,10 @@ sr_timer_loop()
             if(!isdefined(level.sr_end_banked))
             {
                 level.sr_end_banked = 1;
-                fin = getcvarint("rt_run_total") + (gettime() - level.sr_starttime);
+                if(getcvarint("rt_dll_api") >= 14 && isdefined(level.sr_wcur))
+                    fin = sr_floor_big(getcvarint("rt_wtotal") + level.sr_wcur); // wall-true final
+                else
+                    fin = getcvarint("rt_run_total") + (gettime() - level.sr_starttime);
                 setcvar("rt_run_total", fin);
                 setcvar("rt_ms_cur", 0);
                 level.sr_starttime = gettime(); // pinned: elapsed stays 0
@@ -481,7 +572,17 @@ sr_hud_loop()
         else                hud_spd.color = (1, 1, 1);       // idle
 
         if(getcvarint("rt_end_frozen"))
-            total = getcvarint("rt_run_total"); // frozen final time
+            total = getcvarint("rt_run_total"); // frozen final (wall-banked at split)
+        else if(sr_is_briefmap(getcvar("mapname")))
+        {
+            // briefing level: show the frozen bank only (its time never counts)
+            if(getcvarint("rt_dll_api") >= 14)
+                total = getcvarint("rt_wtotal");
+            else
+                total = getcvarint("rt_run_total");
+        }
+        else if(getcvarint("rt_dll_api") >= 14 && isdefined(level.sr_wcur))
+            total = sr_floor_big(getcvarint("rt_wtotal") + level.sr_wcur); // wall RTA, ~1ms true
         else
             total = getcvarint("rt_run_total") + gettime() - level.sr_starttime;
 

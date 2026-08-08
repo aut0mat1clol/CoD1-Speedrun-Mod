@@ -2,7 +2,7 @@
 
 ## The hook: `maps/_load.gsc`
 
-Every one of the 26 campaign missions calls `maps\_load::main()` at the top
+Every one of the 21 campaign missions calls `maps\_load::main()` at the top
 of its map script. The mod injects exactly **one line** at the very start of
 that function:
 
@@ -37,7 +37,8 @@ in `pak0.pk3` & co. Uninstalling = deleting the pk3.
   1. `getfractionstartammo()` on the player → exact planar speed
      `sqrt(vx^2 + vy^2)` for the speedometer.
   2. `getfractionmaxammo()` called **with no arguments** →
-     `float(GetTickCount())`, a wall clock used to count pause-menu time.
+     `float(GetTickCount())`, the real system clock — used to count
+     pause-menu time and to drive the 1 ms run timer.
 - Stock behavior under normal usage is unchanged — verified: **none of the
   144 stock `.gsc` scripts call either function**.
 
@@ -47,8 +48,8 @@ in `pak0.pk3` & co. Uninstalling = deleting the pk3.
   persists through F9 quickloads via archived cvars
   (`rt_cont_real` / `rt_cont_wall`, CVAR_ARCHIVE).
 - Excluded automatically: loads (same-map rollback detector), pre-mission
-  briefing screens (level-clock gate). ESC pause **counts** (RTA) via the
-  wall clock. New Game auto-resets.
+  briefing screens (level-clock gate). ESC pause **counts** (RTA), measured
+  on the real clock. New Game auto-resets.
 - The HUD is script hudelems only (single-digit columns; no custom shaders,
   menus or cgame changes).
 - Console output (always on): `NEW GAME: run timer reset`,

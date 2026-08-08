@@ -4,17 +4,17 @@
 # Берёт из игры готовые файлы (main\z_sr_speedrun_loctext.pk3 с уже вставленным
 # хуком + configs\autoexec.cfg проекта (флаг ставится 14) + пропатченную
 # пропатченная gamex86.dll из корня игры) и собирает ОДИН zip в .\release\ :
-#   cod1_speedrun_1_0_3_full.zip - мод + спидометр + учёт паузы (RTA):
+#   cod1_speedrun_1_1_full.zip - мод + спидометр + учёт паузы (RTA):
 #     main\       -> кинуть в main игры (pk3 + autoexec.cfg)
 #     game_root\  -> gamex86.dll кинуть в корень игры (с заменой, свой бэкап!)
 # Предусловие: install.ps1 -Patch уже отработал из СВЕЖЕЙ копии проекта
-# (dll-патч, md5 AB3FF2DF...; pk3 содержит 1.0.1 - скрипт это ПРОВЕРЯЕТ).
+# (dll-патч, md5 AB3FF2DF...; pk3 обязан содержать маркер $wantVer - скрипт это ПРОВЕРЯЕТ).
 # Чистый GSC-вариант не собирается - нужен точный спидометр + паузы.
 # ============================================================================
 
 $ErrorActionPreference = "Stop"
 $modRoot = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Definition)
-$wantVer = "1.0.3"   # свежесть pk3 проверяется по этой строке в _main.gsc
+$wantVer = "1.1"   # свежесть pk3 проверяется по этой строке в _main.gsc
 $wantDll = "AB3FF2DFBF7892E6DBEBC4A23E1615B4"
 
 Write-Host "=== package_release: полный архив (мод + спидометр + паузы RTA, $wantVer) ===" -ForegroundColor Cyan
@@ -50,7 +50,7 @@ if(-not $gsc.Contains("Speedrun mod loaded ($wantVer)")) {
 }
 Write-Host "pk3 свежий: $pk3InGame ($($gsc.Length) байт gsc, версия $wantVer)" -ForegroundColor Green
 
-# --- пропатченная dll (точный спидометр + wall-clock пауз) ---
+# --- пропатченная dll (точный спидометр + учёт пауз по реальным часам) ---
 $dllPatched = Join-Path $GamePath "gamex86.dll"
 if(-not (Test-Path $dllPatched)) { throw "gamex86.dll не найден в корне игры?" }
 $h = (Get-FileHash $dllPatched -Algorithm MD5).Hash
@@ -90,36 +90,56 @@ $installTxt = @"
    КОРНЯ игры (куда-нибудь рядом, вдруг откатывать), затем скопируй
    gamex86.dll из папки "game_root" этого архива в КОРЕНЬ игры (с заменой).
 3. Запусти игру, загрузи любую карту. Мод МОЛЧИТ по умолчанию (sr_debug 0):
-   видны только важные строки Reset / Map Time / Run End. Для проверки
+   видны только важные строки Reset / Map Time / Run End.
+   Настройки мода теперь и в меню: НАСТРОЙКИ (OPTIONS) -> блок "Speedrun Mod
+   / Settings" внизу справа, под НАЗАД (спидометр, avg, таймеры, знаки,
+   debug, кнопка полного сброса рана). Для проверки
    набери в консоли (~):  set sr_debug 1  - и при новой загрузке карты жди:
-     "Speedrun mod loaded (1.0.3)"
+     "Speedrun mod loaded (1.1)"
      "pause clock ON"
    Спидометр - в центре экрана, общее время справа вверху под Level Time.
    Формат тотала H:MM:SS.mmm с нулями; цвет спидометра по скорости:
      190+ зелёный, 250+ жёлтый, 300+ красный (ниже - белый).
 
 ПРОВЕРКА:
-- ESC-пауза ~5 секунд -> "[SR] PAUSE: +5.048s counted (menu time runs)"
-  и общее время выросло на ~5 c (время в меню СЧИТАЕТСЯ, RTA).
+- Общее время: миллисекунды бегут по РЕАЛЬНОМУ времени (~1 мс через
+  пропатченную dll), а не сеткой кадров сервера 50 мс. ESC-пауза
+  ~5 секунд -> общее время выросло на ~5 c (время в меню СЧИТАЕТСЯ, RTA).
+  Подробности пауз - set sr_debug 1: "[SR] PAUSE: +5.048s counted".
 - F5/F9 -> "[SR] LOAD: total continued from ... s" - загрузки НЕ считаются.
 - Экран брифинга перед миссией -> "[SR] PRE-MISSION: +...s screen time
   skipped (not counted)" - тоже НЕ считается.
+- Экраны брифингов-карт (allied_start, ru_stalingrad, uk_6ab, uk_sas,
+  us_intro, us_mid) из рана исключены ЦЕЛИКОМ, время между уровнями = 0,
+  послеуровневые меню/статистика СЧИТАЮТСЯ (паритет с ASL speedrun.com).
+  Если ставил бету меню или
+  тестовые pk3 - удали z_sr_speedrun_menu.pk3 и z_sr_speedrun_wall.pk3
+  из main: всё это уже внутри z_sr_speedrun_loctext.pk3.
 - Новая игра (training) сбрасывает ран сама.
 
 ОТКАТ: верни свой gamex86.dll на место; удали z_sr_speedrun_loctext.pk3 и
-autoexec.cfg из main игры.
+autoexec.cfg из main игры (и строки sr_* из main\config.cfg - начисто).
+
+СОХРАНЕНИЕ НАСТРОЕК меню (одноразово): движок пишет в config.cfg только
+cvar'ы с флагом ARCHIVE. Выполни в консоли (~) ОДИН раз:
+  seta sr_speedo 1; seta sr_spd_avg 1; seta sr_igt 1; seta sr_spd_dec 1; seta sr_debug 0
+Дальше любые изменения в меню сами сохраняются между запусками.
 
 ЧТО ВНУТРИ: точный спидометр (скорость из ps.velocity движка), таймер рана
-(переживает F9: архивный канал), пауза по wall-clock (RTA), автосплиты в
-лог, финальный сплит на Берлине, заморозка на титрах.
+по реальному времени с точностью ~1 мс (RTA: паузы считаются; переживает F9: архивный канал,
+загрузки не считаются; брифинг-экраны и 6 брифинг-карт исключены;
+время между уровнями = 0; паузы и послеуровневые меню считаются - паритет
+с официальным ASL автосплиттером speedrun.com), автосплиты в лог, финальный сплит на
+Берлине, заморозка на титрах, меню настроек в OPTIONS.
 Управление - через консоль (~):
   set sr_speedo 0|1   - спидометр вкл/выкл
+  set sr_spd_avg 0|1  - средняя скорость за 5 сек вкл/выкл
   set sr_igt 0|1      - таймеры вкл/выкл
   set sr_spd_dec 0..3 - знаков после точки у спидометра
   set sr_maxwin 30    - окно авто-сброса макс. скорости, сек (0 = выкл)
   set sr_debug 0|1    - подробные строки [SR] (LOAD/PAUSE/HUD...); 0 = тихо
   set com_maxfps 125  - фикс fps (физика зависит от fps!)
-Полный сброс рана: set rt_run_total 0; set rt_ms_cur 0; set rt_spd_max 0; set rt_end_frozen 0; set rt_cont_real 0; set rt_cont_wall 0; set rt_cmd_mreset 1
+Полный сброс рана: set rt_run_total 0; set rt_ms_cur 0; set rt_wtotal 0; set rt_wcur_int 0; set rt_spd_max 0; set rt_end_frozen 0; set rt_cont_real 0; set rt_cont_wall 0; set rt_cmd_mreset 1
 
 ВНИМАНИЕ:
 - только версия 1.3, одиночная игра;
@@ -131,7 +151,7 @@ autoexec.cfg из main игры.
 
 $release = Join-Path $modRoot "release"
 if(-not (Test-Path $release)) { New-Item -ItemType Directory -Path $release | Out-Null }
-$zip = Join-Path $release "cod1_speedrun_1_0_3_full.zip"
+$zip = Join-Path $release "cod1_speedrun_1_1_full.zip"
 if(Test-Path $zip) { Remove-Item $zip -Force }
 Compress-Archive -Path (Join-Path $stage "full\*") -DestinationPath $zip
 Remove-Item $stage -Recurse -Force
