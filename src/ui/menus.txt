@@ -7,6 +7,9 @@
 
 	loadMenu { "ui/options.menu" }
 	loadMenu { "ui/sr_settings.menu" }	// SPEEDRUN MOD
+	loadMenu { "ui/sr_pb.menu" }	// SPEEDRUN MOD PB PAGE
+	loadMenu { "ui/sr_delete.menu" }	// SPEEDRUN MOD DELETE RUNS PAGE
+	loadMenu { "ui/sr_run.menu" }	// SPEEDRUN MOD RUN SPLITS PAGE
 	loadMenu { "ui/options_look.menu" }
 	loadMenu { "ui/options_move.menu" }
 	loadMenu { "ui/options_shoot.menu" }

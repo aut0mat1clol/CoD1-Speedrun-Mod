@@ -1,4 +1,6 @@
-# CoD1 game scripts require CRLF on disk - normalize on checkout
-*.gsc text eol=crlf
-*.cfg text eol=crlf
-*.ps1 text eol=crlf
+# GSC, menus and configs are read by the game engine - keep CRLF.
+*.gsc   text eol=crlf
+*.menu  text eol=crlf
+*.txt   text eol=crlf
+*.cfg   text eol=crlf
+*.md    text eol=lf

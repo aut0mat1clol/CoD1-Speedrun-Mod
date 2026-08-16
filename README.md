@@ -1,112 +1,188 @@
-# CoD1 Speedrun — All-in-One mod
+# CoD1 Speedrun Mod — pure-GSC side build
 
-Speedrun toolkit for **Call of Duty (2003), single-player campaign, patch 1.3**
-(Windows, iw3xo-style): HUD speedometer, run timer (`H:MM:SS.mmm`) running on
-**real time with ~1 ms precision**, surviving quickloads, automatic map splits,
-final split on berlin; **pause menu time counts** (RTA), briefing levels and
-between-level gaps are fully excluded. Settings panel in the game's OPTIONS
-menu.
+Speedrun toolkit for **Call of Duty (2003), single player, patch 1.3**.
+Level + full-game timers matching the speedrun.com autosplitter, a
+millisecond speedometer, per-level PBs and an in-game settings panel.
 
-## Download & install (2 minutes)
+This repo holds the **sources only** — GSC scripts, UI menus and configs.
 
-1. Download **`cod1_speedrun_*_full.zip`** from the
-   **[latest release](https://github.com/aut0mat1clol/CoD1-Speedrun-Mod/releases/latest)**.
-2. Unzip into your game folder (the one containing `CoDSP.exe`):
-   - contents of `main\` → into `main\` (the mod pk3 + `autoexec.cfg`)
-   - `game_root\gamex86.dll` → into the game root, replacing the original.
-     **Back up your original `gamex86.dll` first** (any copy of it is fine).
-3. Launch the game.
-4. The mod is quiet by default (`sr_debug 0`): only Reset / Map Time / Run End
-   print. Sanity check: `set sr_debug 1` in the console → after a map loads
-   you should see `Speedrun mod loaded ("version")` + `pause clock ON`.
-
-**Uninstall**: delete the pk3 + `autoexec.cfg` from `main\`, restore your
-original `gamex86.dll`. No other game files are touched.
+---
 
 ## Features
 
-| Feature | How it works |
+| | |
 |---|---|
-| Run timer (HUD, top-right, `H:MM:SS.mmm`) | real time at 1 ms resolution via the patched dll (`rt_dll_api >= 14`); survives F9 quickloads (archived-cvar channel `rt_cont_real`, re-syncs to the save moment) |
-| Pause & menu counting (RTA) | speedrun.com ASL parity: ESC pauses, death screens and post-level menu/stats screens **count**; true load screens and the pre-mission briefing cradle are excluded |
-| Auto-splits | `MAP TIME & RUN TOTAL` printed on every map change |
-| F9 rollback protection | total rolls back to the moment the save was made |
-| Final split on berlin | freezes on the first frame of the end video (`wait (0.6)` after `cinematic()`, hardcoded — identical for every runner); final time is real-clock exact (1 ms) |
-| Credits map | timer stays pinned at the final time |
-| Speedometer (HUD, center) | exact native speed; color-coded: white < 180, green 180+, yellow 230+, red 275+; decimals via `sr_spd_dec` 0–3 |
-| Settings menu | OPTIONS → "Speedrun Mod / Settings" panel: speedometer, 5 s average, timers, decimals, debug, full run reset |
+| **Level timer (L)** | starts at the level-start autosave, counts down through the intro (`-2.8 → 0.0`) |
+| **Full-game timer (FG)** | `H:MM:SS.mmm`, survives quickloads, final split on the berlin cinematic |
+| **Timing rule** | matches LiveSplit *Game Time* with the `yf5y2.asl` autosplitter: loads and briefing maps excluded, pauses and death screens counted |
+| **Speedometer** | 0.001 u/s precision, colour-coded, rolling 5 s average |
+| **Level PBs** | per-level records with delta, plus a full-run PB |
+| **Run splits** | live table of the current run |
+| **Settings panel** | Options → Speedrun Mod → Settings |
+| **Anti-cheese** | a level loaded with `map`/`devmap`, or left before finishing, is not banked and never becomes a PB |
 
-Loads and pre-mission briefing screens are excluded automatically; the six
-briefing **maps** — `allied_start`, `ru_stalingrad`, `uk_6ab`, `uk_sas`,
-`us_intro`, `us_mid` — are excluded entirely, so time between levels is
-exactly 0; starting a New Game resets the run timer.
+Measured against LiveSplit over a full 8-map segment: **0.065 s total drift**,
+no systematic sign — the remainder is rounding in the LiveSplit table plus the
+50 ms server tick.
 
-**LiveSplit parity.** Timing rules mirror the official speedrun.com
-autosplitter (ASL) for CoD1: same exclusions, same inclusions, final split on
-the berlin end cinematic. Measured residual offset vs LiveSplit "Game Time":
-≈0.1–0.15 s per level, accumulated at each map boundary — the engine never
-exposes the exact load-flag clear/spawn moment to GSC, so that boundary span
-is unobservable from script (LiveSplit reads it from process memory
-directly). For leaderboard submissions the LiveSplit timer remains the judge;
-this mod gives 1 ms-true, self-consistent practice/split times.
+---
 
-## Console controls (~ key)
-
-- Full run reset:
-  `set rt_run_total 0; set rt_ms_cur 0; set rt_wtotal 0; set rt_wcur_int 0; set rt_spd_max 0; set rt_end_frozen 0; set rt_cont_real 0; set rt_cont_wall 0; set rt_cmd_mreset 1`
-  (or use the Settings menu's **Reset Run** button)
-- Toggles: `set sr_speedo 0|1`, `set sr_spd_avg 0|1`, `set sr_igt 0|1`;
-  speedometer decimals: `set sr_spd_dec 0|1|2|3`
-- FPS lock: `set com_maxfps 125` (or 85/250/333 — lock it for the run)
-- Timer resolution: with the patched dll the run total is true real time
-  at ~1 ms resolution (the HUD itself still repaints once per server frame,
-  ~50 ms). Without the dll the timer falls back to the old frame-grid math.
-
-## Settings menu persistence (one-time setup)
-
-The engine only writes cvars created with the ARCHIVE flag to `config.cfg`.
-To make menu changes stick between launches, run this **once** in the
-console (`~`):
+## Repo layout
 
 ```
-seta sr_speedo 1; seta sr_spd_avg 1; seta sr_igt 1; seta sr_spd_dec 1; seta sr_debug 0
+src/maps/speedrun/_main.gsc   the entire mod (init, timers, HUD, PB, splits)
+src/maps/_load.gsc            stock 1.3 + one hook line
+src/maps/berlin.gsc           stock 1.3 + final-split hook
+src/maps/_tankdrive.gsc       stock 1.3 + one hudelem sort fix
+src/ui/*.menu, menus.txt      settings / PB / run-splits / delete pages
+configs/*.cfg                 archived-cvar declarations
+docs/TIMING.md                timing rules and how they were verified
+CHANGELOG.md                  what changed and why
 ```
 
-These are just the starting defaults; any later change in the menu is saved
-automatically. Repeat only if you wipe your `config.cfg`.
+### Stock files
 
-## Cvars
+`_load.gsc`, `berlin.gsc` and `_tankdrive.gsc` are **stock 1.3 scripts** with
+minimal edits, all marked `// [SR]`:
 
-**Settings (`sr_`):** `sr_speedo`, `sr_spd_avg`, `sr_igt`, `sr_spd_dec`,
-`sr_debug`, `sr_firstmap`
-(New Game auto-reset map).
+* `_load.gsc:3` — `thread maps\speedrun\_main::init();` — the entry point;
+* `berlin.gsc` — sets `rt_end_frozen` 0.6 s after `cinematic()`, freezing the
+  run on the first frame of the end video;
+* `_tankdrive.gsc` — raises one hudelem's `sort` so the tank HUD frame keeps
+  drawing above its fill when extra script elements exist.
 
-**Data (`rt_`, do not touch):** `rt_spd`, `rt_spd_max`, `rt_run_total`,
-`rt_ms_cur`, `rt_wtotal`, `rt_wcur_int`, `rt_igt_m/s/ds`, `rt_cont_real`,
-`rt_cont_wall`, `rt_last_map`, `rt_end_frozen`, `rt_dt`.
+Two mods that both replace `_load.gsc` are incompatible — the pk3 loaded last
+(alphabetically) wins.
 
-**Internal (`rt_`):** `rt_dll_api` (set automatically), `rt_cmd_mreset`.
+---
 
-## For moderators: what's actually changed
+## Building the pk3
 
-The timer core is **pure GSC**. The release replaces exactly three things:
+A pk3 is a plain zip. Pack the **contents** of `src/` (not the folder itself):
 
-- **`main\z_sr_speedrun_loctext.pk3`** — the mod scripts and the settings
-  menu. Ships three stock scripts with single-line diffs, each documented:
-  `maps/_load.gsc` (one-line init hook, see `patches/HOOK_load_gsc.md`),
-  `maps/_tankdrive.gsc` (`tankhud2.sort = 1000` — cosmetic fix for the tank
-  healthbar frame), `maps/berlin.gsc` (final-split anchor). Menu side:
-  `ui/menus.txt` (+1 `loadMenu` line), `ui/options.menu` (+ a "Speedrun Mod /
-  Settings" entry, see `patches/UI_menu.md`) and the new
-  `ui/sr_settings.menu`. No other stock files are modified or overridden.
-- **`main\autoexec.cfg`** — initializes the mod's archived cvars
-  (`rt_cont_real/rt_cont_wall/rt_dll_api`).
-- **`gamex86.dll`** (md5 `AB3FF2DFBF7892E6DBEBC4A23E1615B4`) — a binary patch
-  of the stock dll with two minimal additive overloads: an exact speedometer
-  readout and the real system clock (GetTickCount) — it drives both pause
-  counting and the ~1 ms-resolution run total. Stock behavior of the
-  patched function is fully preserved — none of the 144 stock `.gsc` scripts
-  call it (verified).
+```
+maps/...
+ui/...
+```
 
-Keep a backup of your original `gamex86.dll` — it is the only stock file
-the release overwrites.
+Name it so it sorts last, e.g. `z_aio_il_timer.pk3`, and drop it into `main\`.
+
+> **Paths inside the archive must use forward slashes.** Windows' built-in
+> "Send to → Compressed folder" and `Compress-Archive` write backslashes; the
+> archive opens fine everywhere but the engine will not find the scripts, and
+> the mod silently does nothing. 7-Zip and `zip` are safe.
+
+Optionally add `sr_pb.cfg` / `sr_settings.cfg` to `main\` as well (see below).
+
+---
+
+## Native bridge (optional)
+
+The pure-GSC build works on a stock exe. A patched `CoDSP.exe` adds:
+
+* `rt_velx10` — exact engine speed ×1000 (0.001 u/s readout);
+* `rt_wallms` — `GetTickCount` wall clock;
+* `rt_aslms` / `rt_asllatch` — a timer that only advances while the engine
+  accepts input, i.e. the same rule the ASL load remover applies;
+* archived declarations for every `sr_*` setting, so they persist without any
+  `exec`.
+
+Without it the mod falls back to the level clock: timing still works, the
+speedometer drops to tenths, and settings need `exec sr_settings.cfg` once.
+
+The patch is a code cave hooked into the client frame; it is not part of this
+repo (binary), only its cvar contract is described here.
+
+---
+
+## Configs
+
+| File | Purpose |
+|---|---|
+| `sr_settings.cfg` | declares the settings as archived (`seta`) — only needed on an un-patched exe |
+| `sr_pb.cfg` | declares the PB cvars; **run once**, then the engine keeps them in `config.cfg` |
+| `sr_pbwipe.cfg` | wipes every PB (used by the Delete Runs menu page) |
+| `sr_cleanup.cfg` | blanks internal cvars left over from ≤ 0.18.x |
+
+Do **not** put these in `autoexec.cfg`: they declare defaults, so running them
+again resets your records and settings.
+
+---
+
+## Settings
+
+| Cvar | Default | Meaning |
+|---|---|---|
+| `sr_speedo` | 1 | speedometer |
+| `sr_spd_avg` | 1 | rolling 5 s average |
+| `sr_igt` | 1 | master switch for both timer rows |
+| `sr_show_l` | 1 | LEVEL row |
+| `sr_show_fg` | 1 | FULL GAME row |
+| `sr_ilmode` | 0 | level timer only; nothing is banked into the run |
+| `sr_tmr_dec` | 3 | timer digits: 1=tenths, 2=hundredths, 3=ms |
+| `sr_spd_dec` | 3 | speedometer digits (0–3) |
+| `sr_lvl_start` | 1 | 1 = L starts at the level autosave |
+| `sr_tail` | 360 | per-map tail correction, ms |
+| `sr_debug` | 0 | verbose `[SR]` prints |
+| `sr_firstmap` | training | map a run starts on |
+
+Fine tuning, rarely touched: `sr_spd_raw`, `sr_velprec`, `sr_lvl_pre`,
+`sr_spd_hyst`.
+
+Console latches — set to `1`, the mod acts and clears them:
+`run_show`, `pb_show`, `pb_wipe`, `rt_cmd_mreset`.
+
+### Naming
+
+`sr_` is **settings only** — typing `sr_` in the console lists exactly the
+options above and nothing else. Everything internal lives under `rt_`
+(run-time): engine bridges (`rt_velx10`, `rt_wallms`, `rt_aslms`,
+`rt_asllatch`), run bookkeeping (`rt_run_total`, `rt_lat_prev`, `rt_norun`,
+`rt_rta`) and scratch buffers. Do not set those by hand.
+
+Upgrading from ≤ 0.18.x leaves the old internal names in `config.cfg`, and the
+engine recreates them at every start, so they keep appearing in autocomplete.
+CoD1 has no `unset`, so the only real fix is deleting those lines from
+`main\config.cfg` with the game closed — see `configs/sr_cleanup.cfg`.
+
+---
+
+## GSC notes (CoD1 quirks)
+
+Things this engine will not let you do — each one cost a debugging session:
+
+1. **No `int()` / `floor()`.** Round through the cvar channel: write the scaled
+   float, read it back with `getcvarint` (string parsing truncates).
+2. **Never `!` an undefined variable** — `cannot cast undefined to bool`. Use
+   `!isdefined(level.x)`.
+3. **No unary minus on variables.** Write `(0 - x)`.
+4. **Dynamic HUD text is impossible.** `setText` takes only static localized
+   strings (`&"..."`); runtime strings throw `cannot cast string to istring`.
+   Numbers go through `setValue`, so digits are drawn as separate elements.
+5. **Loop ceiling is `wait .05`** — 20 server frames per second.
+6. **Savegames restore script state**, including thread locals. A script cannot
+   detect its own rollback by comparing two of its own variables; mirror the
+   value into a cvar, because cvars are not rolled back.
+7. **Briefing maps do not run `maps\_load::main()`**, so the mod never sees
+   them — they break any chain that assumes every map runs `init()`.
+
+---
+
+## Chat output
+
+During a run the mod only prints what you need:
+
+```
+[SR] MAP TIME 02:28.603 | RUN TOTAL 0:27:36.403
+[SR] NEW LEVEL PB: 02:28.603!
+[SR] RUN END! FINAL TIME 0:28:57.405 - gg!
+```
+
+plus whatever a command returns. Everything else — resets, skipped maps,
+pause/save accounting, the startup banner — is diagnostic and appears only
+with `sr_debug 1`.
+
+## Credits
+
+Timing rules follow the community autosplitter `yf5y2.asl` used on
+speedrun.com. Stock scripts © Infinity Ward.

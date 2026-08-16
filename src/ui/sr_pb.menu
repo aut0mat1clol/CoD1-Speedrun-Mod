@@ -1,0 +1,74 @@
+#include "ui/menudef.h"
+{
+menuDef
+{
+	name sr_pb
+	fullScreen 0
+	rect OPTIONS_WINDOW_POS OPTIONS_WINDOW_SIZE
+	focusColor UI_FOCUS_COLOR
+	soundloop ""
+	onESC
+	{
+		open sr_settings;
+		close sr_pb;
+	}
+	itemDef { name sr_pb_back rect 0 0 OPTIONS_WINDOW_SIZE style WINDOW_STYLE_FILLED border 1 bordercolor .5 .5 .5 .5 forecolor 1 1 1 1 backcolor OPTIONS_WINDOW_BACKCOLOR visible 1 decoration }
+	itemDef { name header_back rect 80 2 200 32 style WINDOW_STYLE_FILLED border 0 backcolor OPTIONS_CONTROL_BACKCOLOR visible 1 decoration }
+	itemDef { name sr_pb_title text "Level PBs (story order)" textscale .23 type ITEM_TYPE_BUTTON style 0 rect 112.5 8 120 10 textalign 1 textalignx 60 textaligny 10 forecolor 1 1 1 .9 visible 1 decoration }
+	itemDef { name pbl_training text "training:" type ITEM_TYPE_TEXT textscale .18 rect 16 44 100 12 textalign 0 forecolor 0.75 0.75 0.75 1 visible 1 decoration }
+	itemDef { name pbl_pathfinder text "pathfinder:" type ITEM_TYPE_TEXT textscale .18 rect 16 61 100 12 textalign 0 forecolor 0.75 0.75 0.75 1 visible 1 decoration }
+	itemDef { name pbl_burnville text "burnville:" type ITEM_TYPE_TEXT textscale .18 rect 16 78 100 12 textalign 0 forecolor 0.75 0.75 0.75 1 visible 1 decoration }
+	itemDef { name pbl_dawnville text "dawnville:" type ITEM_TYPE_TEXT textscale .18 rect 16 95 100 12 textalign 0 forecolor 0.75 0.75 0.75 1 visible 1 decoration }
+	itemDef { name pbl_carride text "carride:" type ITEM_TYPE_TEXT textscale .18 rect 16 112 100 12 textalign 0 forecolor 0.75 0.75 0.75 1 visible 1 decoration }
+	itemDef { name pbl_brecourt text "brecourt:" type ITEM_TYPE_TEXT textscale .18 rect 16 129 100 12 textalign 0 forecolor 0.75 0.75 0.75 1 visible 1 decoration }
+	itemDef { name pbl_chateau text "chateau:" type ITEM_TYPE_TEXT textscale .18 rect 16 146 100 12 textalign 0 forecolor 0.75 0.75 0.75 1 visible 1 decoration }
+	itemDef { name pbl_powcamp text "powcamp:" type ITEM_TYPE_TEXT textscale .18 rect 16 163 100 12 textalign 0 forecolor 0.75 0.75 0.75 1 visible 1 decoration }
+	itemDef { name pbl_pegasusnight text "pegasusnight:" type ITEM_TYPE_TEXT textscale .18 rect 16 180 100 12 textalign 0 forecolor 0.75 0.75 0.75 1 visible 1 decoration }
+	itemDef { name pbl_pegasusday text "pegasusday:" type ITEM_TYPE_TEXT textscale .18 rect 16 197 100 12 textalign 0 forecolor 0.75 0.75 0.75 1 visible 1 decoration }
+	itemDef { name pbl_dam text "dam:" type ITEM_TYPE_TEXT textscale .18 rect 16 214 100 12 textalign 0 forecolor 0.75 0.75 0.75 1 visible 1 decoration }
+	itemDef { name pbl_truckride text "truckride:" type ITEM_TYPE_TEXT textscale .18 rect 16 231 100 12 textalign 0 forecolor 0.75 0.75 0.75 1 visible 1 decoration }
+	itemDef { name pbl_airfield text "airfield:" type ITEM_TYPE_TEXT textscale .18 rect 16 248 100 12 textalign 0 forecolor 0.75 0.75 0.75 1 visible 1 decoration }
+	itemDef { name pbl_ship text "ship:" type ITEM_TYPE_TEXT textscale .18 rect 16 265 100 12 textalign 0 forecolor 0.75 0.75 0.75 1 visible 1 decoration }
+	itemDef { name pbl_stalingrad text "stalingrad:" type ITEM_TYPE_TEXT textscale .18 rect 194 44 100 12 textalign 0 forecolor 0.75 0.75 0.75 1 visible 1 decoration }
+	itemDef { name pbl_redsquare text "redsquare:" type ITEM_TYPE_TEXT textscale .18 rect 194 61 100 12 textalign 0 forecolor 0.75 0.75 0.75 1 visible 1 decoration }
+	itemDef { name pbl_trainstation text "trainstation:" type ITEM_TYPE_TEXT textscale .18 rect 194 78 100 12 textalign 0 forecolor 0.75 0.75 0.75 1 visible 1 decoration }
+	itemDef { name pbl_sewer text "sewer:" type ITEM_TYPE_TEXT textscale .18 rect 194 95 100 12 textalign 0 forecolor 0.75 0.75 0.75 1 visible 1 decoration }
+	itemDef { name pbl_pavlov text "pavlov:" type ITEM_TYPE_TEXT textscale .18 rect 194 112 100 12 textalign 0 forecolor 0.75 0.75 0.75 1 visible 1 decoration }
+	itemDef { name pbl_factory text "factory:" type ITEM_TYPE_TEXT textscale .18 rect 194 129 100 12 textalign 0 forecolor 0.75 0.75 0.75 1 visible 1 decoration }
+	itemDef { name pbl_railyard text "railyard:" type ITEM_TYPE_TEXT textscale .18 rect 194 146 100 12 textalign 0 forecolor 0.75 0.75 0.75 1 visible 1 decoration }
+	itemDef { name pbl_tankdrivecountry text "tankdrivecountry:" type ITEM_TYPE_TEXT textscale .18 rect 194 163 100 12 textalign 0 forecolor 0.75 0.75 0.75 1 visible 1 decoration }
+	itemDef { name pbl_tankdrivetown text "tankdrivetown:" type ITEM_TYPE_TEXT textscale .18 rect 194 180 100 12 textalign 0 forecolor 0.75 0.75 0.75 1 visible 1 decoration }
+	itemDef { name pbl_hurtgen text "hurtgen:" type ITEM_TYPE_TEXT textscale .18 rect 194 197 100 12 textalign 0 forecolor 0.75 0.75 0.75 1 visible 1 decoration }
+	itemDef { name pbl_rocket text "rocket:" type ITEM_TYPE_TEXT textscale .18 rect 194 214 100 12 textalign 0 forecolor 0.75 0.75 0.75 1 visible 1 decoration }
+	itemDef { name pbl_berlin text "berlin:" type ITEM_TYPE_TEXT textscale .18 rect 194 231 100 12 textalign 0 forecolor 0.75 0.75 0.75 1 visible 1 decoration }
+	itemDef { name pbl_full_run text "FULL RUN:" type ITEM_TYPE_TEXT textscale .18 rect 194 248 100 12 textalign 0 forecolor 0.75 0.75 0.75 1 visible 1 decoration }
+	itemDef { name pbx_training type ITEM_TYPE_TEXT cvar "pbs_training" rect 118 44 41 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
+	itemDef { name pbx_pathfinder type ITEM_TYPE_TEXT cvar "pbs_pathfinder" rect 118 61 41 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
+	itemDef { name pbx_burnville type ITEM_TYPE_TEXT cvar "pbs_burnville" rect 118 78 41 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
+	itemDef { name pbx_dawnville type ITEM_TYPE_TEXT cvar "pbs_dawnville" rect 118 95 41 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
+	itemDef { name pbx_carride type ITEM_TYPE_TEXT cvar "pbs_carride" rect 118 112 41 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
+	itemDef { name pbx_brecourt type ITEM_TYPE_TEXT cvar "pbs_brecourt" rect 118 129 41 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
+	itemDef { name pbx_chateau type ITEM_TYPE_TEXT cvar "pbs_chateau" rect 118 146 41 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
+	itemDef { name pbx_powcamp type ITEM_TYPE_TEXT cvar "pbs_powcamp" rect 118 163 41 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
+	itemDef { name pbx_pegasusnight type ITEM_TYPE_TEXT cvar "pbs_pegasusnight" rect 118 180 41 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
+	itemDef { name pbx_pegasusday type ITEM_TYPE_TEXT cvar "pbs_pegasusday" rect 118 197 41 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
+	itemDef { name pbx_dam type ITEM_TYPE_TEXT cvar "pbs_dam" rect 118 214 41 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
+	itemDef { name pbx_truckride type ITEM_TYPE_TEXT cvar "pbs_truckride" rect 118 231 41 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
+	itemDef { name pbx_airfield type ITEM_TYPE_TEXT cvar "pbs_airfield" rect 118 248 41 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
+	itemDef { name pbx_ship type ITEM_TYPE_TEXT cvar "pbs_ship" rect 118 265 41 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
+	itemDef { name pbx_stalingrad type ITEM_TYPE_TEXT cvar "pbs_stalingrad" rect 296 44 41 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
+	itemDef { name pbx_redsquare type ITEM_TYPE_TEXT cvar "pbs_redsquare" rect 296 61 41 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
+	itemDef { name pbx_trainstation type ITEM_TYPE_TEXT cvar "pbs_trainstation" rect 296 78 41 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
+	itemDef { name pbx_sewer type ITEM_TYPE_TEXT cvar "pbs_sewer" rect 296 95 41 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
+	itemDef { name pbx_pavlov type ITEM_TYPE_TEXT cvar "pbs_pavlov" rect 296 112 41 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
+	itemDef { name pbx_factory type ITEM_TYPE_TEXT cvar "pbs_factory" rect 296 129 41 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
+	itemDef { name pbx_railyard type ITEM_TYPE_TEXT cvar "pbs_railyard" rect 296 146 41 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
+	itemDef { name pbx_tankdrivecountry type ITEM_TYPE_TEXT cvar "pbs_tankdrivecountry" rect 296 163 41 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
+	itemDef { name pbx_tankdrivetown type ITEM_TYPE_TEXT cvar "pbs_tankdrivetown" rect 296 180 41 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
+	itemDef { name pbx_hurtgen type ITEM_TYPE_TEXT cvar "pbs_hurtgen" rect 296 197 41 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
+	itemDef { name pbx_rocket type ITEM_TYPE_TEXT cvar "pbs_rocket" rect 296 214 41 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
+	itemDef { name pbx_berlin type ITEM_TYPE_TEXT cvar "pbs_berlin" rect 296 231 41 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
+	itemDef { name pbx_full_run type ITEM_TYPE_TEXT cvar "pbs_full" rect 296 248 52 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
+	itemDef { name sr_pb_hint text "read-only PBs - persist via: exec sr_pb.cfg once" type ITEM_TYPE_TEXT textscale .16 rect 194 265 190 10 forecolor 0.6 0.6 0.6 1 visible 1 decoration }
+}
+}

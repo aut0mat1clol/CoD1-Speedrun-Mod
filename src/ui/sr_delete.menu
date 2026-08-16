@@ -1,0 +1,257 @@
+#include "ui/menudef.h"
+{
+menuDef
+{
+	name sr_delete
+	fullScreen 0
+	rect OPTIONS_WINDOW_POS OPTIONS_WINDOW_SIZE
+	focusColor UI_FOCUS_COLOR
+	soundloop ""
+	onOpen
+	{
+		show grpdefault;
+		show areyousure;
+		hide grpfinish;
+	}
+	onESC
+	{
+		open sr_settings;
+		close sr_delete;
+	}
+
+	itemDef
+	{
+		name sr_del_back
+		rect 0 0 OPTIONS_WINDOW_SIZE
+		style WINDOW_STYLE_FILLED
+		border 1
+		bordercolor .5 .5 .5 .5
+		forecolor 1 1 1 1
+		backcolor OPTIONS_WINDOW_BACKCOLOR
+		visible 1
+		decoration
+	}
+	itemDef
+	{
+		name header_back
+		rect 80 2 200 32
+		style WINDOW_STYLE_FILLED
+		border 0
+		backcolor OPTIONS_CONTROL_BACKCOLOR
+		visible 1
+		decoration
+	}
+	itemDef
+	{
+		name sr_del_title1
+		text "Speedrun Mod"
+		textscale .23
+		type ITEM_TYPE_BUTTON
+		style 0
+		rect 112.5 5 120 10
+		textalign 1
+		textalignx 60
+		textaligny 10
+		forecolor 0.75 0.75 0.75 1
+		visible 1
+		decoration
+	}
+	itemDef
+	{
+		name sr_del_title2
+		text "Delete Runs"
+		type 1
+		textscale .23
+		rect 125 20 110 10
+		textalign 1
+		textalignx 55
+		textaligny 10
+		forecolor 1 1 1 .9
+		visible 1
+		decoration
+	}
+
+	itemDef
+	{
+		name warn1
+		group grpdefault
+		text "This will erase EVERY saved PB:"
+		type 1
+		textscale .21
+		rect 180 55 35 10
+		textalign 1
+		textalignx 0
+		textaligny 10
+		forecolor 1 1 1 .9
+		visible 1
+		decoration
+	}
+	itemDef
+	{
+		name warn2
+		group grpdefault
+		text "all 26 level times and the FULL RUN."
+		type 1
+		textscale .21
+		rect 180 72 35 10
+		textalign 1
+		textalignx 0
+		textaligny 10
+		forecolor 1 1 1 .9
+		visible 1
+		decoration
+	}
+	itemDef
+	{
+		name warn3
+		group grpdefault
+		text "It cannot be undone."
+		type 1
+		textscale .21
+		rect 180 89 35 10
+		textalign 1
+		textalignx 0
+		textaligny 10
+		forecolor 1 .55 .55 1
+		visible 1
+		decoration
+	}
+	itemDef
+	{
+		name areyousure
+		group grpdefault
+		text "Are you sure?"
+		type 1
+		textscale .3
+		rect 180 118 35 10
+		textalign 1
+		textalignx 0
+		textaligny 10
+		forecolor 1 1 1 .9
+		visible 1
+		decoration
+	}
+
+	itemDef
+	{
+		name yes
+		text "@MENU_YES"
+		group grpdefault
+		type 1
+		textfont UI_FONT_NORMAL
+		textscale .3
+		style UI_BUTTON_STYLE
+		textstyle UI_BUTTON_TEXT_STYLE
+		rect 40 145 100 26
+		textalign 1
+		textalignx 50
+		textaligny 18
+		forecolor UI_BUTTON_TEXT_COLOR
+		backcolor UI_BUTTON_BACK_COLOR
+		visible 1
+		border UI_BUTTON_BORDER
+		bordercolor UI_BUTTON_BORDER_COLOR
+		action
+		{
+				play "mouse_click";
+				setcvar pb_wipe "1";
+				exec "exec sr_pbwipe.cfg";
+				hide grpdefault;
+				hide areyousure;
+				show grpfinish;
+		}
+		mouseEnter { setitemcolor yes backcolor UI_BUTTON_BACK_COLOR_HOVER
+		play "mouse_over" }
+		mouseExit { setitemcolor yes backcolor UI_BUTTON_BACK_COLOR }
+	}
+	itemDef
+	{
+		name no
+		text "@MENU_NO"
+		group grpdefault
+		type 1
+		textfont UI_FONT_NORMAL
+		textscale .3
+		style UI_BUTTON_STYLE
+		textstyle UI_BUTTON_TEXT_STYLE
+		rect 220 145 100 26
+		textalign 1
+		textalignx 50
+		textaligny 18
+		forecolor UI_BUTTON_TEXT_COLOR
+		backcolor UI_BUTTON_BACK_COLOR
+		border UI_BUTTON_BORDER
+		bordercolor UI_BUTTON_BORDER_COLOR
+		visible 1
+		action
+		{
+			play "mouse_click";
+			open sr_settings;
+			close sr_delete;
+		}
+		mouseEnter { setitemcolor no backcolor UI_BUTTON_BACK_COLOR_HOVER
+		play "mouse_over" }
+		mouseExit { setitemcolor no backcolor UI_BUTTON_BACK_COLOR }
+	}
+
+	itemDef
+	{
+		name finish_message
+		group grpfinish
+		style 0
+		text "All personal bests deleted."
+		rect 180 70 35 20
+		textalign 1
+		textalignx 0
+		textaligny 20
+		textscale .25
+		forecolor 1 1 1 1
+		visible 0
+		decoration
+	}
+	itemDef
+	{
+		name finish_message
+		group grpfinish
+		style 0
+		text "The PB table is empty - next run sets new ones."
+		rect 180 92 35 20
+		textalign 1
+		textalignx 0
+		textaligny 20
+		textscale .21
+		forecolor 0.75 0.75 0.75 1
+		visible 0
+		decoration
+	}
+	itemDef
+	{
+		name finish_back
+		group grpfinish
+		text "@MENU_BACK"
+		type 1
+		textfont UI_FONT_NORMAL
+		textscale .3
+		style UI_BUTTON_STYLE
+		textstyle UI_BUTTON_TEXT_STYLE
+		rect 130 145 100 26
+		textalign 1
+		textalignx 50
+		textaligny 18
+		forecolor UI_BUTTON_TEXT_COLOR
+		backcolor UI_BUTTON_BACK_COLOR
+		border UI_BUTTON_BORDER
+		bordercolor UI_BUTTON_BORDER_COLOR
+		visible 0
+		action
+		{
+			play "mouse_click";
+			open sr_settings;
+			close sr_delete;
+		}
+		mouseEnter { setitemcolor finish_back backcolor UI_BUTTON_BACK_COLOR_HOVER
+		play "mouse_over" }
+		mouseExit { setitemcolor finish_back backcolor UI_BUTTON_BACK_COLOR }
+	}
+}
+}
