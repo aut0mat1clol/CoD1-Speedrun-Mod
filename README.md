@@ -180,5 +180,5 @@ with `sr_debug 1`.
 
 ## Credits
 
-Timing rules follow the community autosplitter `yf5y2.asl` used on
+Timing rules follow the community autosplitter used on
 speedrun.com. Stock scripts © Infinity Ward.
