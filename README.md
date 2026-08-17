@@ -1,4 +1,4 @@
-# CoD1 Speedrun Mod — pure-GSC side build
+# CoD1 All-in-One Speedrun Mod 
 
 Speedrun toolkit for **Call of Duty (2003), single player, patch 1.3**.
 Level + full-game timers matching the speedrun.com autosplitter, a
