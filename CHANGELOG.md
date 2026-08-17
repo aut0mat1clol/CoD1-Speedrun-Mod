@@ -1,133 +1,135 @@
-# Changelog
+# CoD1 Speedrun Mod — Patch Notes
 
-Only the entries that changed behaviour. Versions before 0.14 are summarised.
+Compiled from the commit history of
+[aut0mat1clol/CoD1-Speedrun-Mod](https://github.com/aut0mat1clol/CoD1-Speedrun-Mod).
 
-## 1.2.2
+---
 
-* `map berlin` typed right after **launching the game** could save a bogus
-  full-run PB: `rt_last_map` is a session cvar, so on a fresh start the
-  arrival check saw an empty previous map and treated berlin as "first map of
-  the session" — `rt_norun` stayed 0. The final split now also requires the
-  first map's split to exist in the current run table (`rs_<firstmap>` > 0,
-  a session cvar written only when the first map is actually banked).
-  `RUN END!` still prints as a reference; only the PB is blocked.
-* Mod sub-pages (Level PBs / Run Splits / Delete Runs) stayed open when a
-  stock Options section was clicked without pressing ESC first, stacking two
-  pages on screen. Every right-hand Options button (and `options_menu`'s
-  `onClose`) now closes `sr_run` / `sr_pb` / `sr_delete` too, and the
-  Speedrun Settings button closes them before opening its own page.
+## 1.2.2 — 2026-08-17
 
-## 1.2.1
+*Double Berlin banking fix, Settings fix* (`5876bf3`)
 
-* **PBs survive a restart without `exec sr_pb.cfg`** (patched exe v18): the
-  run-once cave that declares the `sr_*` settings now also walks a table of
-  all 54 PB cvars (`pb_`/`pbs_` for the 26 maps + full) and declares each
-  through the engine's own `Cvar_Get` with the ARCHIVE flag. `Cvar_Get` never
-  overwrites an existing value, so current records are kept; the engine
-  writes them to `config.cfg` on exit. `sr_pb.cfg` stays as the fallback for
-  a stock exe.
-* **Berlin was added to the full-game total twice.** The final-split block
-  banked berlin itself but left `rt_rta_last` alive, `sr_rta_loop()` kept
-  refreshing it, and credits' `init()` re-banked it — credits is not in the
-  story list, so the order check waved the arrival through as a custom map
-  (`rt_banked_map` only guards the PB compare, not the total; `sr_tail` was
-  added on top as well). Three independent fixes: the final split zeroes
-  `rt_rta_last` / `rt_wcur_int` / `rt_lat_prev`, `sr_rta_loop()` stops once
-  `rt_end_frozen` is set, and an arrival with `rt_end_frozen` up banks
-  nothing at all.
+**Fixed**
+- **Berlin was added to the full-game total twice.** The final split banked
+  berlin itself but left the RTA mirror (`rt_rta_last`) alive, so arriving on
+  credits banked it a second time — credits is not in the story list, so the
+  order check waved it through. Fixed with three independent layers: the final
+  split zeroes every mirror, the RTA loop stops once `rt_end_frozen` is set,
+  and an arrival with the run already over banks nothing.
+- **Menu pages stacked on top of each other.** Opening Level PBs / Run Splits /
+  Delete Runs and then clicking a stock Options section (without ESC) drew both
+  pages at once. Every right-hand Options button and `options_menu`'s `onClose`
+  now close the mod's sub-pages too.
+- A bogus full-run PB could be saved by typing `map berlin` right after
+  launching the game (empty previous-map cvar looked like "first map of the
+  session"). The final split now also requires the first map's split to exist
+  in the current run table.
+- PB records (`pb_*`/`pbs_*`) are declared as ARCHIVE cvars by the patched exe
+  (v18), so they survive a restart without `exec sr_pb.cfg`; the cfg stays as a
+  fallback for a stock exe. PB page hint updated accordingly.
+- Cleaned up the stale multi-version comment walls in `_main.gsc`.
 
-## 1.2
+---
 
-First tagged release.
+## 1.2 — 2026-08-16
 
-* Chat is quiet during a run: only `MAP TIME` / `RUN TOTAL`, PB lines, the
-  final time and command output. Everything diagnostic (resets, skipped maps,
-  pause/save accounting, the load banner) moved behind `sr_debug 1`.
-* Fixed a double `[SR] [SR]` prefix on the PB lines.
+*Level PBs, better timing, Level and Run's menus* (`0ea17d6`) — first tagged
+release; the largest update so far (+3553 / −1100 lines).
 
-## 0.19.2
+**Added**
+- **Per-level PBs** with chat compare (`NEW LEVEL PB` / `PB ... delta`) and a
+  full-run PB taken at the berlin final split.
+- **Level timer (L row)** next to the full-game row: starts at the level-start
+  autosave, counts down through the intro (`-2.8 → 0.0`), survives quickloads.
+- **New menu pages:** Level PBs (story order), Run Splits (live table of the
+  current run), Delete Runs (confirm + wipe), all under Options → Speedrun Mod.
+- **Configs:** `sr_pb.cfg` (PB cvar declarations), `sr_pbwipe.cfg` (wipe),
+  `sr_settings.cfg` (settings fallback for a stock exe).
+- **Docs:** `CHANGELOG.md` and `docs/TIMING.md` (timing rules and how they were
+  verified).
 
-* Fixed the 0.19.1 fix: clearing `nextmap` after reading it broke the very
-  signal it introduced — the clear hit the *next* transition, so leaving
-  pegasusnight there was no handover marker left. The split was dropped and
-  the run flagged, which also made the full-game row look like it had reset.
-* `nextmap` is no longer written by the mod at all (it belongs to the engine),
-  and banking is allowed by default again: only an out-of-order arrival blocks
-  it. Requiring a positive "level finished" signal keeps failing on maps that
-  end without a victory screen, and losing a real split is worse than
-  occasionally accepting a manual jump.
+**Changed**
+- Timing reworked toward ASL/LiveSplit parity: loads, checkpoint-save freezes
+  and briefing maps excluded; pauses and death screens counted. Splits and PBs
+  are stored at millisecond precision; display rounding is applied only at the
+  readout (`sr_tmr_dec`: tenths / hundredths / ms).
+- Chat is quiet during a run: only `MAP TIME` / `RUN TOTAL`, PB lines, the
+  final time and command output. All diagnostics moved behind `sr_debug 1`.
+- Internal cvars renamed `sr_*` → `rt_*`, so `sr_` in the console lists
+  settings only.
+- Anti-cheese: a level loaded with `map`/`devmap`, or left before finishing,
+  is not banked and never becomes a PB; `map training` restarts the run.
+- Repo restructured: `src_loctext/` → `src/`, patch docs replaced by the
+  changelog.
 
-## 0.19.1
+---
 
-* Splits were dropped on levels that do not end through a victory screen
-  (pegasusnight, and any other map handing over by itself) — a regression from
-  0.18.2, where banking required a flag only the victory watcher could set.
-  The handover is now read from the engine: `missionSuccess()` writes
-  `nextmap = "map <next>"`, a manual `map` never does, so the arriving map just
-  asks whether `nextmap` points at itself. State, not an event.
-* `nextmap` is cleared once read, otherwise a stale value would let a later
-  manual jump to the next story map pass as a legitimate transition.
+## 1.1 — 2026-08-08
 
-## 0.19.0
+*Timing changes, Settings Menu* (`2f57708`)
 
-* Internal cvars moved from `sr_` to `rt_`, so `sr_` in the console lists
-  settings and nothing else: `rt_velx10`, `rt_wallms`, `rt_aslms`,
-  `rt_asllatch`, `rt_norun`, `rt_rta`, `rt_cfg_ok`.
-  Names kept their length, so the exe strings were patched in place — no code
-  moved.
-* Added `configs/sr_cleanup.cfg` for the old names still sitting in
-  `config.cfg` from earlier versions.
+**Added**
+- **In-game Settings page** (Options → Speedrun Mod): Speedometer, Avg Speed,
+  Timers, Decimals, Debug toggles + a Reset Run button. Ships with a modified
+  `options.menu`, `sr_settings.menu` and `menus.txt` (docs in `UI_menu.md`).
 
-## 0.18.x
+**Changed**
+- **Wall-clock timing channel:** with the patched dll (api ≥ 14) splits come
+  from a pause-inclusive wall clock (`rt_wtotal` / `rt_wcur_int`) at ~1 ms
+  accuracy; the old frame-grid numbers remain as fallback for pure-script
+  installs.
+- Briefing levels are excluded from the run total (`BRIEFMAP SKIP`).
 
-* **0.18.2** — `map pathfinder` typed on training was treated as a legitimate
-  transition (pathfinder really is the next story map), so a half-played
-  training got banked. A level is now banked only if it *finished by itself*
-  (`rt_lvl_done`, set by the victory watcher / berlin cinematic).
-* **0.18.1** — loading a quicksave reset the level timer. Restart Level and F9
-  are both savegame loads; they are told apart by where the level clock lands
-  relative to the anchor (`rt_lvl_clk0`).
-* **0.18.0** — settings persist without `exec`: the exe declares every `sr_*`
-  through `Cvar_Get` with the ARCHIVE flag, once per launch.
+---
 
-## 0.17.x
+## 1.0.3 — 2026-08-06/07
 
-* **0.17.1** — Restart Level did not reset L. The detector compared `gettime()`
-  against a thread local, and a savegame restores both, so the rewind was
-  invisible; it now compares against a cvar mirror.
-* **0.17.0** — per-row switches (`sr_show_l`, `sr_show_fg`) and IL mode. Reset
-  Run now holds the L row at zero instead of letting the 20 s fallback re-arm
-  it.
-* **0.16.2** — New Game did not clear the total: the reset ran before the
-  banking block, which put the previous map straight back. Reset Run no longer
-  restarts the FG row on the spot.
-* **0.16.1** — Reset Run only moved `sr_starttime`, the last fallback clock, so
-  with the exe bridge live nothing happened.
-* **0.16.0** — settings cleanup: four contradictory cvars (`sr_ericg`,
-  `sr_aio`, `sr_asl`, `sr_round`) replaced by `sr_tmr_dec`. Run splits became
-  a menu page.
+*avg speed added; avg speed + gap changes* (`b2123e1`, `882b2fd`)
 
-## 0.15.x
+**Added**
+- **Rolling 5-second average speed** under the speedometer (`sr_spd_avg`,
+  100-sample ring buffer @ 50 ms ticks).
 
-* **0.15.1** — a level reached with `map`/`devmap` is not banked and never
-  becomes a PB; `map training` stays the documented way to restart.
-* **0.15.0** — timing returned to the GSC loop plus a constant `sr_tail`
-  (360 ms). The exe code cave is hooked into one branch of an engine switch,
-  which does not run every frame; once the clock lived there, skipped branches
-  became skipped time — one run drifted 81 s.
+**Changed**
+- Quickload restore gap tightened again: 100 ms → 10 ms.
+- Removed `sr_maxwin` (the max-speed auto-reset window) — superseded by the
+  rolling average.
 
-## 0.14.x
+---
 
-* Chased LiveSplit parity through the exe: an ASL-rule counter, a latch at the
-  loading flag, segment stitching. Accurate in principle, but tied to the same
-  unreliable hook — superseded by 0.15.0.
-* **0.14.1** — established from video that the leaderboard reads *Game Time*,
-  which freezes on loads, while Real Time does not.
+## 1.0.2 — 2026-08-06
 
-## Earlier
+*Fixed sr_igt and sr_speedo cvars; Lowered the restore gap* (`04f7b97`,
+`95aeb43`)
 
-* Speedometer bridged through the exe at 0.001 u/s (`rt_velx10`, ×1000).
-* Timer rows in `H:MM:SS.mmm`, always visible, also over menus and end screens.
-* Level PBs, full-run PB, run splits, Delete Runs page.
-* Level timer anchored to the level-start autosave with a countdown intro.
-* Pause counting via a wall clock published by the exe.
+**Fixed**
+- `sr_igt` and `sr_speedo` toggles now actually hide their HUD elements
+  (alpha 0/1, elements stay alive) — including the lazy hour digits.
+
+**Changed**
+- Quickload restore gap lowered: 750 ms → 100 ms.
+
+---
+
+## 1.0.1 — 2026-08-06
+
+*Timer Changes* (`f225b5c`)
+
+**Changed**
+- Milliseconds rendered as three zero-padded digit elements (`MM:SS.mmm`
+  proper) instead of one unpadded number — 10 live hudelems total within the
+  tankdrive budget.
+- Speedometer colour thresholds retuned: green/yellow/red at 190/250/300 →
+  **180/230/275** u/s.
+
+---
+
+## 1.0 — 2026-08-06
+
+*Initial commit* (`7110bd3`, `1d001ce`)
+
+- First public version: `_main.gsc` (timer, speedometer, HUD, quickload
+  continuity), stock `_load.gsc` with the one-line hook, `berlin.gsc` final
+  split, `_tankdrive.gsc` hudelem sort fix.
+- `install.ps1`, packaging/hash tools, `HOOK_load_gsc.md` patch doc,
+  `configs/autoexec.cfg`.
