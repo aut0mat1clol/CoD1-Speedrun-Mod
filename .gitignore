@@ -2,7 +2,7 @@
 *.pk3
 *.zip
 build/
-
+tools/
 # game binaries never belong in the repo
 *.exe
 *.dll
