@@ -35,8 +35,6 @@ src/maps/_load.gsc            stock 1.3 + one hook line
 src/maps/berlin.gsc           stock 1.3 + final-split hook
 src/maps/_tankdrive.gsc       stock 1.3 + one hudelem sort fix
 src/ui/*.menu, menus.txt      settings / PB / run-splits / delete pages
-configs/*.cfg                 archived-cvar declarations
-docs/TIMING.md                timing rules and how they were verified
 CHANGELOG.md                  what changed and why
 ```
 
@@ -84,28 +82,26 @@ The pure-GSC build works on a stock exe. A patched `CoDSP.exe` adds:
 * `rt_wallms` — `GetTickCount` wall clock;
 * `rt_aslms` / `rt_asllatch` — a timer that only advances while the engine
   accepts input, i.e. the same rule the ASL load remover applies;
-* archived declarations for every `sr_*` setting, so they persist without any
-  `exec`.
+* archived declarations for every `sr_*` setting and every `pb_*`/`pbs_*`
+  record, so settings and PBs persist without any `exec`.
 
 Without it the mod falls back to the level clock: timing still works, the
 speedometer drops to tenths, and settings need `exec sr_settings.cfg` once.
 
-The patch is a code cave hooked into the client frame; it is not part of this
-repo (binary), only its cvar contract is described here.
+No game binary is distributed. **`tools/patch_exe.ps1` applies the patch to
+your own stock 1.3 exe** — the script carries only the mod's code cave
+(13 blocks, 2834 bytes) as data:
 
----
+```
+powershell -ExecutionPolicy Bypass -File tools\patch_exe.ps1 -GamePath "C:\path\to\game"
+powershell -ExecutionPolicy Bypass -File tools\patch_exe.ps1 -GamePath "..." -Revert
+```
 
-## Configs
-
-| File | Purpose |
-|---|---|
-| `sr_settings.cfg` | declares the settings as archived (`seta`) — only needed on an un-patched exe |
-| `sr_pb.cfg` | declares the PB cvars — only needed on an un-patched exe (v18 declares them itself); **run once**, then the engine keeps them in `config.cfg` |
-| `sr_pbwipe.cfg` | wipes every PB (used by the Delete Runs menu page) |
-| `sr_cleanup.cfg` | blanks internal cvars left over from ≤ 0.18.x |
-
-Do **not** put these in `autoexec.cfg`: they declare defaults, so running them
-again resets your records and settings.
+Fail-closed: the exe's MD5 is checked before writing (stock 1.3 only —
+modified/no-CD exes are refused untouched), a backup (`CoDSP.exe.sr_backup`)
+is created automatically, and the result is verified after writing.
+MD5: stock `8E1D57D69705485D8D641CCC636DAE6B` →
+patched `C00B045D5131EB4ACB682FAFAEA439C1`.
 
 ---
 
