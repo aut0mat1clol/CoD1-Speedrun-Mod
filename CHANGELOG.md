@@ -2,6 +2,40 @@
 
 Only the entries that changed behaviour. Versions before 0.14 are summarised.
 
+## 1.2.2
+
+* `map berlin` typed right after **launching the game** could save a bogus
+  full-run PB: `rt_last_map` is a session cvar, so on a fresh start the
+  arrival check saw an empty previous map and treated berlin as "first map of
+  the session" — `rt_norun` stayed 0. The final split now also requires the
+  first map's split to exist in the current run table (`rs_<firstmap>` > 0,
+  a session cvar written only when the first map is actually banked).
+  `RUN END!` still prints as a reference; only the PB is blocked.
+* Mod sub-pages (Level PBs / Run Splits / Delete Runs) stayed open when a
+  stock Options section was clicked without pressing ESC first, stacking two
+  pages on screen. Every right-hand Options button (and `options_menu`'s
+  `onClose`) now closes `sr_run` / `sr_pb` / `sr_delete` too, and the
+  Speedrun Settings button closes them before opening its own page.
+
+## 1.2.1
+
+* **PBs survive a restart without `exec sr_pb.cfg`** (patched exe v18): the
+  run-once cave that declares the `sr_*` settings now also walks a table of
+  all 54 PB cvars (`pb_`/`pbs_` for the 26 maps + full) and declares each
+  through the engine's own `Cvar_Get` with the ARCHIVE flag. `Cvar_Get` never
+  overwrites an existing value, so current records are kept; the engine
+  writes them to `config.cfg` on exit. `sr_pb.cfg` stays as the fallback for
+  a stock exe.
+* **Berlin was added to the full-game total twice.** The final-split block
+  banked berlin itself but left `rt_rta_last` alive, `sr_rta_loop()` kept
+  refreshing it, and credits' `init()` re-banked it — credits is not in the
+  story list, so the order check waved the arrival through as a custom map
+  (`rt_banked_map` only guards the PB compare, not the total; `sr_tail` was
+  added on top as well). Three independent fixes: the final split zeroes
+  `rt_rta_last` / `rt_wcur_int` / `rt_lat_prev`, `sr_rta_loop()` stops once
+  `rt_end_frozen` is set, and an arrival with `rt_end_frozen` up banks
+  nothing at all.
+
 ## 1.2
 
 First tagged release.

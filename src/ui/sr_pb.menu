@@ -69,6 +69,6 @@ menuDef
 	itemDef { name pbx_rocket type ITEM_TYPE_TEXT cvar "pbs_rocket" rect 296 214 41 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
 	itemDef { name pbx_berlin type ITEM_TYPE_TEXT cvar "pbs_berlin" rect 296 231 41 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
 	itemDef { name pbx_full_run type ITEM_TYPE_TEXT cvar "pbs_full" rect 296 248 52 12 textscale .18 forecolor 1 1 0.55 1 textalign 0 visible 1 decoration }
-	itemDef { name sr_pb_hint text "read-only PBs - persist via: exec sr_pb.cfg once" type ITEM_TYPE_TEXT textscale .16 rect 194 265 190 10 forecolor 0.6 0.6 0.6 1 visible 1 decoration }
+	itemDef { name sr_pb_hint text "read-only PBs - saved automatically (exe v18); stock exe: exec sr_pb.cfg once" type ITEM_TYPE_TEXT textscale .16 rect 194 265 190 10 forecolor 0.6 0.6 0.6 1 visible 1 decoration }
 }
 }

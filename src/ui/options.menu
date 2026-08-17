@@ -22,6 +22,9 @@
 		onClose
 		{
 			close sr_settings;
+				close sr_run;
+				close sr_pb;
+				close sr_delete;
 			close options_look;
 			close options_move;
 			close options_shoot;
@@ -123,6 +126,9 @@
 				close options_graphics_defaults;
 				close options_control_defaults;
 				close sr_settings;
+				close sr_run;
+				close sr_pb;
+				close sr_delete;
 				open options_look;
 //				exec "loadgame_continue";
 			}
@@ -163,6 +169,9 @@
 				close options_graphics_defaults;
 				close options_control_defaults;
 				close sr_settings;
+				close sr_run;
+				close sr_pb;
+				close sr_delete;
 				open options_move;
 //				close main;
 //				exec "loadgame_continue";
@@ -204,6 +213,9 @@
 				close options_graphics_defaults;
 				close options_control_defaults;
 				close sr_settings;
+				close sr_run;
+				close sr_pb;
+				close sr_delete;
 				open options_shoot;
 //				close main;
 //				exec "loadgame_continue";
@@ -247,6 +259,9 @@
 				close options_graphics_defaults;
 				close options_control_defaults;
 				close sr_settings;
+				close sr_run;
+				close sr_pb;
+				close sr_delete;
 				open options_misc;
 			}
 		}
@@ -288,6 +303,9 @@
 				close options_graphics_defaults;
 				close options_control_defaults;
 				close sr_settings;
+				close sr_run;
+				close sr_pb;
+				close sr_delete;
 				open options_misc;
 			}
 		}
@@ -327,6 +345,9 @@
 				close options_graphics_defaults;
 				close options_misc;
 				close sr_settings;
+				close sr_run;
+				close sr_pb;
+				close sr_delete;
 				open options_control_defaults;
 			}
 		}
@@ -388,6 +409,9 @@
 				close options_graphics_defaults;
 				close options_control_defaults;
 				close sr_settings;
+				close sr_run;
+				close sr_pb;
+				close sr_delete;
 				open options_graphics;
 				
 //				close main;
@@ -430,6 +454,9 @@
 				close options_graphics_defaults;
 				close options_control_defaults;
 				close sr_settings;
+				close sr_run;
+				close sr_pb;
+				close sr_delete;
 				open options_sound;
 				
 //				close main;
@@ -472,6 +499,9 @@
 				close options_graphics_defaults;
 				close options_control_defaults;
 				close sr_settings;
+				close sr_run;
+				close sr_pb;
+				close sr_delete;
 				open options_performance;
 //				close main;
 //				exec "loadgame_continue";
@@ -515,6 +545,9 @@
 				close options_graphics_defaults;
 				close options_control_defaults;
 				close sr_settings;
+				close sr_run;
+				close sr_pb;
+				close sr_delete;
 				open options_driverinfo;
 			}
 		}
@@ -553,6 +586,9 @@
 				close options_multi;
 				close options_control_defaults;
 				close sr_settings;
+				close sr_run;
+				close sr_pb;
+				close sr_delete;
 				open options_graphics_defaults;
 			}
 		}
@@ -619,6 +655,9 @@
 				close options_graphics_defaults;
 				close options_control_defaults;
 				close sr_settings;
+				close sr_run;
+				close sr_pb;
+				close sr_delete;
 				open options_multi;
 			}
 		}
@@ -656,6 +695,9 @@
 				close options_driverinfo;
 				close options_credits;
 				close sr_settings;
+				close sr_run;
+				close sr_pb;
+				close sr_delete;
 				open options_view;
 				
 //				close main;
@@ -743,6 +785,9 @@
 				close options_graphics_defaults;
 				close options_control_defaults;
 				close sr_settings;
+				close sr_run;
+				close sr_pb;
+				close sr_delete;
 				open options_defaults;
 
 //				close main;
@@ -805,6 +850,9 @@
 				close options_multi;
 				close options_graphics_defaults;
 				close options_control_defaults;
+				close sr_run;
+				close sr_pb;
+				close sr_delete;
 				open sr_settings;
 			}
 		}

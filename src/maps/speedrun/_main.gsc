@@ -1,49 +1,26 @@
 // ============================================================================
-// Speedrun All-in-One (1.0.3) / CoD1 SP (patch 1.3) - LOCTEXT single build
-// PURE-GSC side build v0.5 ("1.1 in tenths, script-only"): the whole 1.1
-// feature set with the dll layer REMOVED - no patches, no native hooks.
+// CoD1 Speedrun Mod - pure-GSC side build (SP, patch 1.3)
 //
-// Semantics:
-//   - run total survives F9 quickloads via the archived cvar channel
-//     (rt_cont_real/rt_cont_wall; the names are historical - both carry
-//     LEVEL-clock ms now); same-map catch-up: a >10ms gap restores the
-//     run total;
-//   - timing = LEVEL CLOCK (gettime): true load screens and pre-mission
-//     briefings never advance it, so they are excluded for free. The
-//     ESC/menu PAUSE freezes the clock too -> pause time is NOT counted
-//     (a pure script has no real-time source; the CoD4 AiO-canon frame
-//     timer freezes in pause exactly the same way);
-//   - two timers (v0.7.2, CoD4-AiO style): LEVEL time from the moment
-//     of control (origin-delta heuristic) over the banked full total;
-//   - per-level PBs with chat compare + a PB menu page (v0.7.0; menu
-//     reordered to story order + left-aligned labels in v0.7.2), CoD4-AiO
-//     semantics; persistence via seta lines in sr_pb.cfg), full-run PB
-//     compare at the berlin final split;
-//     (exe v8 tried vieworg-delta: too noisy at 300+ fps, reverted in
-//      v0.7.5 back to exe v7 which field-tested as the good readout);
-//   - speedometer: native engine velocity when the patched CoDSP.exe is
-//     present (cvar sr_velx10 bridge, v0.6.x); otherwise SCRIPT origin-
-//     delta @20Hz (horizontal units/sec from the player origin between
-//     server frames; teleport spikes clamped),
-//     shown via an ADAPTIVE filter: box average over sr_spd_win ticks
-//     (default 10 = 0.5s) when speed is steady, an instant 2-tick
-//     average whenever the change exceeds sr_spd_fast u/s (no lag on
-//     jumps/landings), plus a display deadband (sr_spd_hyst),
-//     HUD center; white/green/yellow/red by speed (180/230/275) + rolling
-//     5s average below it (sr_spd_avg) + max tracker (rt_spd_max);
-//   - PAUSE COUNTING (v0.9.0, ported from the 1.1 dll build): with the
-//     patched gamex86.dll (rt_dll_api >= 14) getfractionmaxammo() returns a
-//     raw GetTickCount wall clock, so ESC pauses / menus / the end-of-level
-//     screen COUNT (RTA), while briefings and true loads stay excluded.
-//     Stock dll -> the block is skipped and timing is level-clock as before;
-//   - run_show 1: prints every split of the CURRENT run (v0.9.0);
-//   - sr_debug 0|1 (default quiet): only Reset / Map Time / Run End print;
-//   - NewGame autoreset (fresh-clock test + first-map briefing latch);
-//   - berlin final split is anchored to the end VIDEO start: freeze after
-//     cinematic() + wait(0.6) - hardcoded, identical for every runner.
-// TIME READOUTS: tenths of a second (HUD MM:SS.d, chat splits, final).
-// NOTE (cod1 gsc): never '!' an undefined var ("cannot cast undefined to
-// bool") - level flags are read as !isdefined(level.x).
+// Level + full-game timers (ASL/LiveSplit parity), speedometer, per-level
+// PBs, run splits, in-game settings pages. Entry point: maps\_load.gsc:3.
+// Works on a stock exe; the patched CoDSP.exe adds the native bridges
+// (rt_velx10 speed, rt_wallms wall clock, rt_aslms ASL timer) and declares
+// the sr_* settings + pb_*/pbs_* records as ARCHIVE cvars.
+//
+// Cvar naming: sr_* = user settings, rt_* = internal run-time state,
+// pb_*/pbs_* = records (ms / display string), rs_/rc_/rss_* = this run's
+// splits (session only). Console latches: run_show, pb_show, pb_wipe,
+// rt_cmd_mreset.
+//
+// GSC quirks that shaped the code (each cost a debugging session):
+//   - never '!' an undefined var - use !isdefined(level.x);
+//   - no unary minus on vars - write (0 - x);
+//   - savegames roll back ALL script state - anything that must survive
+//     an F9 lives in a cvar (cvars are process-global, never rolled back);
+//   - dynamic HUD text is impossible - digits are per-column setValue elems;
+//   - briefing maps do not run _load::main(), the mod never sees them.
+//
+// Full history: CHANGELOG.md in the repo.
 // ============================================================================
 
 init()
@@ -74,45 +51,10 @@ init()
     //   1 = the frame the game WRITES THE LEVEL-START AUTOSAVE (default),
     //   0 = legacy v0.7.2 heuristic (first origin change = control gained).
     sr_cvar_default("sr_lvl_start",  "1");
-    // v0.8.6: length of the intro countdown, ms. The L row counts DOWN from
-    // this to zero and then up. 0 = auto (stock introscreen timing).
-    // v0.9.3: ASL PARITY. 1 = match the speedrun.com autosplitter exactly
-    // (yf5y2.asl): ESC pauses and death screens COUNT, but the END-OF-LEVEL
-    // victory screen does NOT - the game sits at loading==0 there, which the
-    // ASL treats as "loading" and stops the timer.
-    // 0 = count the victory screen too (v0.8.8..v0.9.2 behaviour).
-    // v0.10.0: TIMER STYLE.
-    //   sr_aio 1 = CoD4 AiO style (default now): a 0.1s tick counter that
-    //     counts EVERYTHING while the game is up - ESC pauses, menus, the
-    //     end-of-level screen and the death screen all keep running, and the
-    //     readout advances in tenths. No AiO death penalty (+4.9s) - you
-    //     asked for the plain clock without it.
-    //   sr_aio 0 = the ASL/LiveSplit-parity behaviour of v0.9.x (the end
-    //     screen is excluded so splits match the speedrun.com autosplitter).
-    // v0.12.0: ERICG08 / LEADERBOARD PRESET.
-    // v0.14.0: SIMPLE RTA (sr_rta 1, default).
-    // The level timer is just wall time between "the map started" and "the
-    // next load begins" - nothing is classified, nothing is subtracted.
-    // Everything that happens while you are ON the map counts: pauses, the
-    // death screen, checkpoint hitches, low fps. Only the load screen and
-    // the briefing cradle fall outside, because the map has not started /
-    // has already ended by then.
-    // This is deliberately dumb: no frame heuristics, no ASL flag, so there
-    // is nothing left to mis-detect.
-    // v0.16.0: TIMER DECIMALS - how many digits after the point the timer
-    // rows show: 1 = tenths, 2 = hundredths, 3 = milliseconds (default).
-    // Replaces the old sr_ericg / sr_aio / sr_asl / sr_round tangle: those
-    // were four cvars describing one decision, and three of them could
-    // contradict each other.
     sr_cvar_default("sr_lvl_pre",    "0"); // intro countdown length, 0 = auto
     sr_cvar_default("sr_spd_hyst",   "0"); // speedo deadband, u/s
-    sr_cvar_default("sr_tmr_dec",    "3");
-    sr_cvar_default("rt_rta",        "1");
-    // v0.10.1: HOW the 0.1s readout is rounded.
-    //   0 = down (floor, what AiO itself does)
-    //   1 = nearest (default - smallest possible error)
-    //   2 = up (ceil - never shows a time better than the real one)
-    // ASL parity switch - only consulted when sr_aio is 0.
+    sr_cvar_default("sr_tmr_dec",    "3"); // timer digits: 1=tenths 2=hundredths 3=ms
+    sr_cvar_default("rt_rta",        "1"); // internal timing scheme (RTA banking)
     sr_cvar_default("sr_debug",      "0"); // 1 = full diagnostic [SR] prints
     // INTERNAL STATE (rt_ prefix - data, not settings):
     sr_cvar_default("rt_igt_m",      "0");
@@ -244,7 +186,20 @@ init()
         + "' prev " + prev + "ms brief="
         + sr_is_briefmap(getcvar("rt_last_map")));
 
-    if(prev > 0 && sr_is_briefmap(getcvar("rt_last_map")))
+    if(prev > 0 && getcvarint("rt_end_frozen"))
+    {
+        // v1.2.1: the run is ALREADY OVER - the berlin final-split block
+        // banked berlin itself (rt_end_frozen=1) and we are arriving on
+        // credits. Banking here again was the "berlin counted twice" bug:
+        // rt_rta_last still mirrored berlin's elapsed time, and credits is
+        // not in the story list, so sr_arrival_legit() waved the transition
+        // through as a "custom map". rt_banked_map only guards the PB
+        // compare, not the total - so the total got berlin a second time
+        // (plus sr_tail on top).
+        sr_dbg("RUN OVER: split from '" + getcvar("rt_last_map")
+            + "' already banked by the final split - not banked again");
+    }
+    else if(prev > 0 && sr_is_briefmap(getcvar("rt_last_map")))
     {
         // leaving a briefing level: its time is NOT banked into the run total
         sr_dbg("BRIEFMAP SKIP: '" + getcvar("rt_last_map") + "' excluded " + prev + "ms");
@@ -394,7 +349,7 @@ init()
     // every sr_* setting through Cvar_Get with the ARCHIVE flag, so the engine
     // writes them into config.cfg on exit. No "exec sr_settings.cfg" needed.
     // The cfg is still shipped as a fallback for anyone on an older exe.
-    sr_dbg("Speedrun mod loaded (v1.2).");
+    sr_dbg("Speedrun mod loaded (v1.2.2).");
 }
 
 // ----------------------------------------------------------------------------
@@ -521,6 +476,12 @@ sr_rta_loop()
         wait .05;
         if(getcvar("mapname") != mymap && getcvar("mapname") != "")
             return; // moved on; the last written value is the split
+        // v1.2.1: the berlin final split banked the run and zeroed
+        // rt_rta_last - stop mirroring, or the very next tick would put
+        // berlin's elapsed time right back and credits' init() would bank
+        // it a second time (the double-FG bug).
+        if(getcvarint("rt_end_frozen"))
+            return;
         // v0.14.1: mirror the ASL channel when the exe provides it. The exe
         // only ticks while the game accepts input, so level loads AND the
         // checkpoint-write freezes are already excluded AT THE SOURCE -
@@ -1726,6 +1687,13 @@ sr_timer_loop()
                 }
                 fin = getcvarint("rt_run_total"); // already includes berlin
                 setcvar("rt_ms_cur", 0);
+                // v1.2.1: zero EVERY mirror the next init() can read as a
+                // split. rt_rta_last kept berlin's elapsed time (sr_rta_loop
+                // wrote it every frame), so credits' init() re-banked berlin
+                // into the total - the "FG gets berlin twice" bug.
+                setcvar("rt_rta_last", 0);
+                setcvar("rt_wcur_int", 0);
+                setcvar("rt_lat_prev", 0);
                 level.sr_starttime = gettime(); // pinned: elapsed stays 0
                 if(isdefined(level.sr_lvl_off)) // pin the level timer too
                     level.sr_lvl_ctime = sr_lvl_now();
@@ -1748,6 +1716,22 @@ sr_timer_loop()
                 else if(getcvarint("rt_norun"))
                 {
                     sr_dbg("RUN NOT SAVED: a map was loaded manually");
+                    pbf = 0 - 1; // block the full-run PB below
+                }
+                else if(getcvar("sr_firstmap") != ""
+                    && getcvarint("rs_" + getcvar("sr_firstmap")) <= 0)
+                {
+                    // v1.2.2: `map berlin` typed right after LAUNCHING the
+                    // game slipped through: rt_last_map is a session cvar and
+                    // is empty on a fresh start, so sr_arrival_legit() waved
+                    // the arrival through as "first map of the session" and
+                    // rt_norun stayed 0 - berlin's lone time then became a
+                    // bogus full-run PB. A real full run always BANKS the
+                    // first map, and rs_<firstmap> is a session cvar written
+                    // exactly then - so its absence means the run never
+                    // started at the beginning.
+                    sr_dbg("RUN NOT SAVED: run did not start on '"
+                        + getcvar("sr_firstmap") + "'");
                     pbf = 0 - 1; // block the full-run PB below
                 }
                 if(pbf == 0 - 1)

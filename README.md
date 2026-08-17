@@ -100,7 +100,7 @@ repo (binary), only its cvar contract is described here.
 | File | Purpose |
 |---|---|
 | `sr_settings.cfg` | declares the settings as archived (`seta`) — only needed on an un-patched exe |
-| `sr_pb.cfg` | declares the PB cvars; **run once**, then the engine keeps them in `config.cfg` |
+| `sr_pb.cfg` | declares the PB cvars — only needed on an un-patched exe (v18 declares them itself); **run once**, then the engine keeps them in `config.cfg` |
 | `sr_pbwipe.cfg` | wipes every PB (used by the Delete Runs menu page) |
 | `sr_cleanup.cfg` | blanks internal cvars left over from ≤ 0.18.x |
 
