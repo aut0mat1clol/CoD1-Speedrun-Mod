@@ -191,8 +191,6 @@ main()
 
 	thread spotter_trigger(getent ("spotter_trigger","targetname"));
 
-
-	thread animatic16(getent ("animatic16","targetname"));
 	thread animatic27(getent ("animatic27","targetname"));
 
 	getent ("player_barge","targetname") thread barge_trip();
@@ -3867,6 +3865,7 @@ sniper_think (spawner)
 	level thread wait_notify (0.1, "fleeing guy runs");
 //	level thread wait_notify (0.1, "sniper is talking"); // 14.5
 	objectiveDestination = getent (objectiveDestination.target,"targetname");
+	sniper sniper_kills ("commissar");
 	level thread nextSniperObjective (7, objectiveDestination);
 	anim_reach(guy, "fullbody64", node);
 	anim_single(guy, "fullbody64", undefined, node);
@@ -5481,9 +5480,8 @@ planeAttackTwo ( trigger )
 
 animatic27(trigger)
 {
-	trigger waittill ("trigger");
 	thread sniper_think(getent ("sniper spawner","targetname"));
-
+	level.player mergeto (anchor, 1.5);
 	level.flag["animatic27"] = true;
 	level notify ("start mortars");
 	level.flag["boats should unload"] = true;
