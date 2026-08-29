@@ -1135,6 +1135,7 @@ beacon_think ( beacon )
 	beacon playsound ("Beacon_plant");
 	wait (1.25);
 	maps\_fx::loopSound("Beacon_hum", beacon.origin);
+	thread window_guy (getent ("window guy","targetname"));
 }
 
 flare_think ()
@@ -2130,7 +2131,6 @@ kickOpenDoor ()
 
 kickdoortookTooLong ()
 {
-	wait (15);
 	if (isalive (level.closeFriend))
 	{
 		level.closeFriend setgoalentity (level.player);
@@ -2231,7 +2231,6 @@ enemy_waves ()
 	level notify ("start attack effects");
 	flag_set ("attack underway");
 //	level notify ("start parachutes");
-	level waittill ("touch down");
 	
 //	wait (4);
 	
@@ -2251,7 +2250,6 @@ enemy_waves ()
 	thread spawn_attack_group ("group1");
 	flag_set("planes can be hit");
 //	array_thread (getentarray ("group1","targetname"), ::spawn_attack);
-	wait (5);
 	thread window_guy (getent ("window guy","targetname"));
 	array_thread (getentarray ("bottom floor guy","targetname"), ::spawn_attack);
 	
@@ -2268,19 +2266,6 @@ enemy_waves ()
 	thread randomExplosions();
 	
 	level waittill ("windowguy Done");
-	
-	presound(1);
-	thread maps\_utility::exploder(1);
-	
-	maps\_spawner::kill_spawnerNum(1);
-	
-	chain = maps\_utility::get_friendly_chain_node ("200");
-	level.player SetFriendlyChain (chain); // Make friendlies move up to the first flak area.
-	
-	wait (3);
-	thread maps\_utility::set_ambient("during battle");
-	level thread kickOpenDoor();
-	level waittill ("door is kicked");
 	
 	house_door2 = getent ("new house door", "targetname");
 	house_door2 connectpaths();
